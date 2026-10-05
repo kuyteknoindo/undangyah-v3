@@ -122,6 +122,11 @@
         </header>
 
         <main id="konten" class="flex-1 px-3.5 py-5 sm:px-5 lg:px-8 lg:py-7">
+            @if (session('sukses'))
+                <div role="status" class="mx-auto mb-5 flex max-w-5xl items-center gap-2 rounded-xl bg-success-50 px-4 py-3 text-sm font-medium text-success">
+                    <x-ikon nama="centang" :ukuran="18" /> {{ session('sukses') }}
+                </div>
+            @endif
             {{ $slot }}
         </main>
     </div>
