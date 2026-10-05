@@ -16,5 +16,6 @@
     </main>
     <footer class="pb-6 text-center text-xs leading-5 text-subtle">&copy; {{ date('Y') }} PT Undangyah Digital</footer>
 </div>
+<x-toast />
 </body>
 </html>

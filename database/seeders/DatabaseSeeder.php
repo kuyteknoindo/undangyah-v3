@@ -8,6 +8,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Tidak ada data awal. Buat admin dengan: php artisan undangyah:admin <email>
+        $this->call([
+            AdminSeeder::class,
+        ]);
     }
 }

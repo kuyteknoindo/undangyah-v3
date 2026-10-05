@@ -25,3 +25,10 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Rahasia lokal (tidak boleh di-commit)
+/ADMIN-LOGIN.txt
+/BASIC-AUTH.txt
+ADMIN-LOGIN.txt
+BASIC-AUTH.txt
+/storage/app/private

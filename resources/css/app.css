@@ -122,3 +122,59 @@
         @apply bg-brand-50 font-semibold text-brand;
     }
 }
+
+/* ---- Komponen SaaS (dipetakan dari kelas a-* di desain desktop) ---- */
+@layer components {
+    .kartu { @apply box-border rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]; }
+    .h2 { margin: 0; font-size: 15px; line-height: 22px; font-weight: 600; color: #111827; }
+    .sub { font-size: 13px; line-height: 18px; color: #6b7280; }
+    .hint { font-size: 12px; line-height: 16px; color: #6b7280; }
+    .galat { font-size: 12px; line-height: 16px; font-weight: 500; color: #b42318; }
+    .lbl { display: block; margin-bottom: 6px; font-size: 13px; line-height: 18px; font-weight: 500; color: #374151; }
+
+    .btn-sm { min-height: 32px; padding: 0 10px; border-radius: 8px; font-size: 13px; line-height: 18px; gap: 6px; }
+    .btn-danger { @apply border border-[#fecdca] bg-white text-[#b42318] hover:bg-[#fef3f2]; }
+    .btn-danger-solid { @apply bg-[#d92d20] text-white hover:bg-[#b42318]; }
+    .btn-ghost { @apply bg-transparent text-gray-700 hover:bg-gray-100; }
+    .btn-icon { @apply box-border inline-flex size-[34px] shrink-0 items-center justify-center rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50; }
+
+    .inp { @apply box-border min-h-10 w-full rounded-[10px] border border-line-strong bg-white px-3 py-2 text-sm leading-5 text-ink placeholder:text-muted; }
+    .inp:focus { @apply border-brand outline-none; box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14); }
+    .inp[aria-invalid='true'] { border-color: #f04438; }
+    textarea.inp { min-height: 88px; resize: vertical; }
+    select.inp { appearance: auto; }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px 2px 8px; font-size: 12px; line-height: 18px; font-weight: 600; white-space: nowrap; }
+    .pill::before { content: ''; width: 6px; height: 6px; border-radius: 3px; background: currentColor; }
+    .pill-hijau { background: #ecfdf3; color: #067647; }
+    .pill-kuning { background: #fffaeb; color: #b54708; }
+    .pill-merah { background: #fef3f2; color: #b42318; }
+    .pill-biru { background: #eef3fe; color: #1d4ed8; }
+    .pill-abu { background: #f2f4f7; color: #475467; }
+    .tag { display: inline-flex; align-items: center; border-radius: 6px; padding: 1px 7px; font-size: 11px; line-height: 16px; font-weight: 600; white-space: nowrap; background: #f2f4f7; color: #475467; }
+
+    .tabel { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 18px; color: #374151; }
+    .tabel th { text-align: left; padding: 10px 16px; font-size: 12px; line-height: 16px; font-weight: 500; color: #6b7280; background: #f9fafb; border-top: 1px solid #eef0f3; border-bottom: 1px solid #eef0f3; white-space: nowrap; }
+    .tabel td { padding: 12px 16px; border-bottom: 1px solid #eef0f3; vertical-align: middle; }
+    .tabel tr:last-child td { border-bottom: 0; }
+
+    .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: #f2f4f7; }
+    .seg button { min-height: 32px; padding: 0 12px; border-radius: 8px; font-size: 13px; line-height: 18px; font-weight: 500; color: #4b5563; }
+    .seg button[aria-pressed='true'] { background: #fff; color: #111827; font-weight: 600; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1); }
+
+    .sakelar { position: relative; flex: none; width: 40px; height: 24px; border-radius: 12px; background: #d0d5dd; transition: background-color 150ms; cursor: pointer; }
+    .sakelar::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 9px; background: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.2); transition: transform 150ms; }
+    .sakelar[aria-checked='true'] { background: #1d4ed8; }
+    .sakelar[aria-checked='true']::after { transform: translateX(16px); }
+
+    .kpi { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+    .kpi-l { font-size: 13px; line-height: 18px; font-weight: 500; color: #6b7280; }
+    .kpi-v { font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: #111827; font-variant-numeric: tabular-nums; }
+
+    .kosong { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+    .skel { display: block; background: linear-gradient(90deg, #eceef1 0%, #f5f6f8 40%, #eceef1 80%); background-size: 300% 100%; animation: skel-gerak 1.3s ease-in-out infinite; border-radius: 8px; }
+}
+
+@keyframes skel-gerak { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@keyframes dialog-muncul { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: none; } }
