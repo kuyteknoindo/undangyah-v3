@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/* Token visual mengikuti desain desktop (SaaS bersih, warna utama #1D4ED8). */
+@theme {
+    --font-sans: 'Inter Variable', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+    --color-brand: #1d4ed8;
+    --color-brand-dark: #1a3fa8;
+    --color-brand-50: #eef3fe;
+    --color-brand-100: #e3ecfd;
+    --color-brand-200: #bfd3ff;
+
+    --color-ink: #111827;
+    --color-body: #262a31;
+    --color-nav: #3d4451;
+    --color-muted: #6b7280;
+    --color-subtle: #8b919c;
+    --color-line: #e6e8ec;
+    --color-line-strong: #d9dce1;
+    --color-canvas: #f4f5f7;
+    --color-surface: #fafbfc;
+
+    --color-danger: #ea2b2b;
+    --color-danger-50: #fef2f2;
+    --color-success: #3c7a00;
+    --color-success-50: #f0fbe3;
+    --color-warning: #b25e00;
+    --color-warning-50: #fff4cc;
+
+    --breakpoint-lg: 1024px;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        margin: 0;
+        background: var(--color-canvas);
+        color: var(--color-body);
+        font-family: var(--font-sans);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    button:not(:disabled),
+    [role='button'] {
+        cursor: pointer;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation: none !important;
+            transition: none !important;
+        }
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-3.5 text-sm leading-5 font-semibold whitespace-nowrap transition;
+    }
+
+    .btn:disabled {
+        @apply cursor-not-allowed opacity-50;
+    }
+
+    .btn-primary {
+        @apply bg-brand text-white shadow-[0_1px_2px_rgba(16,24,40,0.12)] hover:bg-brand-dark;
+    }
+
+    .btn-secondary {
+        @apply border border-line-strong bg-white text-[#262b33] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-gray-50;
+    }
+
+    .btn-lg {
+        @apply min-h-11 w-full;
+    }
+
+    /* Kolom isian bergaya desain: kotak putih bertepi, fokus biru. */
+    .field {
+        @apply flex min-h-11 items-center gap-2.5 rounded-[10px] border border-line-strong bg-white pr-1 pl-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)];
+    }
+
+    .field:focus-within {
+        @apply border-brand shadow-[0_0_0_4px_rgba(29,78,216,0.12)];
+    }
+
+    .field[data-invalid] {
+        @apply border-danger;
+    }
+
+    .field-input {
+        @apply h-[42px] w-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm leading-5 text-ink outline-none placeholder:text-muted;
+    }
+
+    .label {
+        @apply text-[13px] leading-[18px] font-medium text-gray-700;
+    }
+
+    .nav-item {
+        @apply flex min-h-[38px] w-full items-center gap-2.5 rounded-lg px-2.5 text-sm leading-5 font-medium text-nav transition-colors hover:bg-gray-100;
+    }
+
+    .nav-item[aria-current='page'] {
+        @apply bg-brand-50 font-semibold text-brand;
+    }
+}
