@@ -12,6 +12,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
+    <x-meta-brand />
     <title>Invoice {{ $pesanan->nomor }} · {{ config('app.name') }}</title>
     <style>
         :root { color-scheme: light; }
@@ -45,8 +46,8 @@
         <button type="button" class="tombol utama" onclick="window.print()">Cetak / simpan PDF</button>
     </div>
     <main class="kertas">
+        <img src="{{ asset('brand/undangyah-logo-full.png') }}" alt="undangyah.com, undangan digital" width="164" height="38" style="display:block;max-width:100%;height:auto;margin:0 0 16px">
         <h1>INVOICE {{ $pesanan->nomor }}</h1>
-        <div class="m">{{ config('app.name') }} &middot; undangyah.com</div>
         <p><span class="cap">{{ $labelStatus }}</span></p>
         <div class="g">
             <div><div class="m">Tanggal pesanan</div>{{ $tgl($pesanan->created_at) }}</div>

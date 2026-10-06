@@ -19,6 +19,8 @@ use Livewire\Attributes\Locked;
  */
 trait AksiPesananAdmin
 {
+    use MintaKonfirmasiSandi;
+
     #[Locked]
     public ?int $aksiId = null;
 
@@ -38,6 +40,7 @@ trait AksiPesananAdmin
         'batal' => ['Batalkan pesanan?', 'Batalkan pesanan', true],
         'kedaluwarsa' => ['Tandai pesanan kedaluwarsa?', 'Tandai kedaluwarsa', false],
         'refund' => ['Tandai pesanan refund?', 'Tandai refund', true],
+        'tinjau' => ['Tandai selesai ditinjau?', 'Tandai selesai', false],
     ];
 
     protected function pastikanAdmin(): User
@@ -61,7 +64,7 @@ trait AksiPesananAdmin
         return match ($p->status) {
             Pesanan::MENUNGGU => array_values(array_filter(['lunas', $p->bukti_path ? 'tolak' : null, 'batal', 'kedaluwarsa'])),
             Pesanan::KEDALUWARSA => ['lunas'],
-            Pesanan::LUNAS => ['refund'],
+            Pesanan::LUNAS => $p->perluDitinjau() ? ['tinjau', 'refund'] : ['refund'],
             default => [],
         };
     }
@@ -78,7 +81,7 @@ trait AksiPesananAdmin
         $this->aksiId = $p->id;
         $this->aksiJenis = $jenis;
         $this->alasan = '';
-        $this->turunkan = $jenis === 'refund' && $p->item->contains('tipe', 'paket');
+        $this->turunkan = $jenis === 'refund' && ! $p->perluDitinjau() && $p->item->contains('tipe', 'paket');
         $this->dialogAksi = true;
     }
 
@@ -104,12 +107,18 @@ trait AksiPesananAdmin
             return;
         }
 
+        // Refund memengaruhi uang dan akses pembeli: wajib konfirmasi sandi admin (dicek di sini, bukan hanya di tombol).
+        if ($jenis === 'refund' && ! $this->butuhSandi('Tandai pesanan refund', 'jalankan')) {
+            return;
+        }
+
         $berubah = match ($jenis) {
             'lunas' => $konfirmasi->lunas($p, $alasan !== '' ? $alasan : null),
             'tolak' => $konfirmasi->tolak($p, $alasan),
             'batal' => $konfirmasi->tolak($p, $alasan, true),
             'kedaluwarsa' => $konfirmasi->kedaluwarsakan($p, true),
             'refund' => $konfirmasi->refund($p, $alasan, $this->turunkan),
+            'tinjau' => $konfirmasi->selesaiTinjau($p, $alasan !== '' ? $alasan : null),
             default => false,
         };
 
@@ -126,6 +135,7 @@ trait AksiPesananAdmin
             'tolak' => 'Bukti pesanan '.$p->nomor.' ditolak. Pembeli diminta mengunggah ulang.',
             'batal' => 'Pesanan '.$p->nomor.' dibatalkan.',
             'kedaluwarsa' => 'Pesanan '.$p->nomor.' ditandai kedaluwarsa.',
+            'tinjau' => 'Pesanan '.$p->nomor.' ditandai selesai ditinjau.',
             default => 'Pesanan '.$p->nomor.' ditandai refund.',
         }, tipe: 'sukses');
         $this->setelahAksi($p->id);
@@ -212,6 +222,9 @@ trait AksiPesananAdmin
             } elseif (! $p->bukti_path) {
                 $peringatan = 'Pembeli belum mengunggah bukti. Pastikan dana sudah masuk di mutasi rekening sebelum menandai lunas.';
             }
+            if ($bentrok = TampilPesananAdmin::bentrokPaket($p)) {
+                $peringatan = trim(($peringatan ? $peringatan.' ' : '').$bentrok);
+            }
         }
 
         return [
@@ -222,11 +235,12 @@ trait AksiPesananAdmin
             'sub' => $p->nomor.' · '.$p->pembeli_nama.' · '.TampilPesananAdmin::rp($p->total),
             'efek' => $this->aksiJenis === 'lunas' ? TampilPesananAdmin::efekLunas($p) : [],
             'peringatan' => $peringatan,
-            'bisaTurunkan' => $this->aksiJenis === 'refund' && $p->item->contains('tipe', 'paket'),
+            'bisaTurunkan' => $this->aksiJenis === 'refund' && ! $p->perluDitinjau() && $p->item->contains('tipe', 'paket'),
             'label' => match ($this->aksiJenis) {
                 'tolak' => 'Alasan penolakan (dikirim ke pembeli)',
                 'batal' => 'Alasan pembatalan (dikirim ke pembeli)',
                 'refund' => 'Alasan refund (dikirim ke pembeli)',
+                'tinjau' => 'Catatan penyelesaian (opsional, mis. dana sudah dikembalikan)',
                 default => 'Catatan (opsional)',
             },
         ];

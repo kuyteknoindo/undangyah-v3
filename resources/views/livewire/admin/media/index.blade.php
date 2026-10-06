@@ -280,4 +280,6 @@
             <button type="button" class="btn btn-danger-solid" wire:click="hapus" wire:loading.attr="disabled" wire:target="hapus" @disabled($nHapusDipakai > 0 && $nHapusDipakai === $hapusDaftar->count() && ! $hapusPaksa)>{{ $hapusDaftar->count() === 1 ? 'Hapus file' : 'Hapus '.$hapusDaftar->count().' file' }}</button>
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

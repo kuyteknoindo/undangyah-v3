@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Jobs\JalankanBackup;
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
 use App\Models\Backup;
 use App\Models\LogAksiAdmin;
 use App\Models\Pengaturan;
@@ -20,10 +21,13 @@ use Livewire\Component;
 /**
  * Admin > Backup dan Restore. Membuat, memverifikasi, mengunduh, dan menghapus backup, serta "Uji pulihkan" ke database
  * sementara. Restore ke database hidup SENGAJA tidak ada di sini: itu keputusan dan tindakan pemilik (instruksi manual).
+ * Bila kelak ada aksi restore, taruh `butuhSandi('Restore backup', ...)` di awal metodenya seperti hapus/ujiPulih/unduh.
+ * Aksi sensitif di halaman ini (wajib konfirmasi sandi): hapus backup, terapkan retensi (hapus massal), uji pulih, unduh berkas.
  */
 class BackupRestore extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     private const PER_HALAMAN = 30;
 
@@ -207,6 +211,9 @@ class BackupRestore extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        if (! $this->butuhSandi('Hapus backup', 'hapus')) {
+            return;
+        }
         $backup = $this->hapusId ? Backup::find($this->hapusId) : null;
         $this->dialogHapus = false;
         $this->hapusId = null;
@@ -237,6 +244,9 @@ class BackupRestore extends Component
     {
         $admin = $this->pastikanAdminDapat();
         if (! $this->izinTulis()) {
+            return;
+        }
+        if (! $this->butuhSandi('Hapus backup lama (retensi)', 'terapkanRetensi')) {
             return;
         }
         $p = PengaturanBackup::ambil();
@@ -270,6 +280,9 @@ class BackupRestore extends Component
         if (! $backup) {
             return;
         }
+        if (! $this->butuhSandi('Uji pulihkan backup', 'ujiPulih')) {
+            return;
+        }
         $kunci = 'backup-uji:'.$admin->id;
         if (RateLimiter::tooManyAttempts($kunci, self::BATAS_UJI_PER_JAM)) {
             $this->dispatch('toast', pesan: 'Batas '.self::BATAS_UJI_PER_JAM.' uji pulih per jam tercapai.', tipe: 'galat');
@@ -284,6 +297,23 @@ class BackupRestore extends Component
             $this->hasilUji = ['ok' => false, 'pesan' => $e->getMessage()];
         }
         LogAksiAdmin::catat($admin, 'uji_pulih_backup', null, ['backup_id' => $backup->id, 'ok' => (bool) ($this->hasilUji['ok'] ?? false), 'tabel' => $this->hasilUji['tabel'] ?? null, 'baris' => $this->hasilUji['baris'] ?? null]);
+    }
+
+    /** Berkas backup memuat seluruh database (termasuk data pribadi): unduhan wajib konfirmasi sandi, dicek ulang di controller. */
+    public function unduh(int $id)
+    {
+        $this->pastikanAdminDapat();
+        $backup = Backup::findOrFail($id);
+        if (! $backup->sukses()) {
+            $this->dispatch('toast', pesan: 'Hanya backup yang berhasil yang bisa diunduh.', tipe: 'galat');
+
+            return null;
+        }
+        if (! $this->butuhSandi('Unduh backup', 'unduh', ['id' => $id])) {
+            return null;
+        }
+
+        return $this->redirect(route('admin.backup.unduh', $backup));
     }
 
     public function tutupUji(): void

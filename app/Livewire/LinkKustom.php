@@ -3,12 +3,14 @@
 namespace App\Livewire;
 
 use App\Models\Undangan;
+use App\Services\PenahananSlug;
 use App\Services\SlugUndangan;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -185,11 +187,15 @@ class LinkKustom extends Component
             $this->galatKonfirmasi = 'Alamat ini sudah dipakai undangan lain.';
 
             return;
+        } catch (ValidationException $e) {
+            $this->galatKonfirmasi = $e->errors()['slug'][0] ?? 'Alamat ini tidak bisa dipakai.';
+
+            return;
         }
 
         $this->tampilKonfirmasi = false;
         $this->paham = false;
-        $this->catatan = 'Link diganti menjadi '.$this->hostPublik().'/'.$baru.'. Link lama sudah tidak aktif.';
+        $this->catatan = 'Link diganti menjadi '.$this->hostPublik().'/'.$baru.'. Link lama dialihkan ke link baru selama '.PenahananSlug::HARI.' hari, lalu tidak aktif.';
     }
 
     private function hostPublik(): string
@@ -203,7 +209,7 @@ class LinkKustom extends Component
             return 'Terlalu banyak pengecekan. Tunggu sebentar lalu coba lagi.';
         }
 
-        return app(SlugUndangan::class)->galat($this->slug, $undangan->id);
+        return app(SlugUndangan::class)->galat($this->slug, $undangan->id, (int) $undangan->user_id);
     }
 
     /** Saran alamat dari judul dan tahun acara; hanya yang format-nya valid dan belum dipakai. */
@@ -235,7 +241,7 @@ class LinkKustom extends Component
         if ($calon->isEmpty()) {
             return [];
         }
-        $dipakai = Undangan::whereIn('slug', $calon)->pluck('slug')->all();
+        $dipakai = [...Undangan::whereIn('slug', $calon)->pluck('slug')->all(), ...app(PenahananSlug::class)->ditahanLain($calon->all(), (int) $undangan->user_id)];
 
         return $calon->reject(fn ($s) => in_array($s, $dipakai, true))->take(5)->values()->all();
     }

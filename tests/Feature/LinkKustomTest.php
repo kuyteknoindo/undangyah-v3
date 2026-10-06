@@ -82,7 +82,7 @@ class LinkKustomTest extends TestCase
             ->call('ganti')
             ->assertHasNoErrors()
             ->assertSet('tampilKonfirmasi', false)
-            ->assertSee('Link lama sudah tidak aktif');
+            ->assertSee('Link lama dialihkan ke link baru selama 90 hari');
 
         $u->refresh();
         $this->assertSame('raka-dan-sinta-2027', $u->slug);

@@ -79,22 +79,26 @@ class SlugUndangan
             ->exists();
     }
 
-    /** @return string|null pesan galat lengkap (format + ketersediaan), atau null bila bisa dipakai. */
-    public function galat(string $slug, ?int $abaikanUndanganId = null): ?string
+    /**
+     * @param  ?int  $penggunaId  pemakai slug (bawaan: pengguna yang login); slug yang ditahan atas namanya sendiri boleh dipakai.
+     * @return string|null pesan galat lengkap (format + ketersediaan + penahanan), atau null bila bisa dipakai.
+     */
+    public function galat(string $slug, ?int $abaikanUndanganId = null, ?int $penggunaId = null): ?string
     {
         return $this->galatFormat($slug)
-            ?? ($this->dipakai($slug, $abaikanUndanganId) ? 'Alamat ini sudah dipakai undangan lain.' : null);
+            ?? ($this->dipakai($slug, $abaikanUndanganId) ? 'Alamat ini sudah dipakai undangan lain.' : null)
+            ?? app(PenahananSlug::class)->galat($slug, $penggunaId ?? auth()->id());
     }
 
     /** Buat slug valid dan belum dipakai dari judul (menambah akhiran angka bila perlu). */
-    public function buat(string $judul, ?int $abaikanUndanganId = null): string
+    public function buat(string $judul, ?int $abaikanUndanganId = null, ?int $penggunaId = null): string
     {
         $dasar = $this->bersihkan($judul);
         if (strlen($dasar) < self::MIN) {
             $dasar = 'undangan-'.($dasar !== '' ? $dasar : Str::lower(Str::random(4)));
         }
         $kandidat = $dasar;
-        for ($i = 2; $this->galat($kandidat, $abaikanUndanganId) !== null; $i++) {
+        for ($i = 2; $this->galat($kandidat, $abaikanUndanganId, $penggunaId) !== null; $i++) {
             $kandidat = Str::limit($dasar, self::MAKS - strlen((string) $i) - 1, '').'-'.$i;
             if ($i > 500) {
                 $kandidat = $dasar.'-'.Str::lower(Str::random(5));

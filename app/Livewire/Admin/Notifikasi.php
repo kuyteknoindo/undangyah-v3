@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\LogAksiAdmin;
 use App\Models\Notifikasi as ModelNotifikasi;
 use App\Models\Paket;
 use App\Models\SiaranNotifikasi;
@@ -127,6 +128,7 @@ class Notifikasi extends Component
 
         RateLimiter::hit($kunci, 3600);
         $siaran = $pengirim->buat($admin, $data);
+        LogAksiAdmin::catat($admin, 'siaran_kirim', null, ['siaran_id' => $siaran->id, 'judul' => mb_substr((string) $data['judul'], 0, 80), 'jumlah_target' => $siaran->jumlah_target, 'paket' => $data['paket'] ?? null, 'peran' => $data['peran'] ?? null]);
         $this->siaranBaruId = $siaran->id;
         $this->tampilKirim = false;
         $this->reset(['judul', 'isi', 'tautan']);

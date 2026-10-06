@@ -11,10 +11,12 @@ use Database\Seeders\PaketSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminInvoicesTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -50,7 +52,7 @@ class AdminInvoicesTest extends TestCase
 
     private function halaman(?User $admin = null)
     {
-        return Livewire::actingAs($admin ?? $this->admin())->test(Invoices::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($admin ?? $this->admin()))->test(Invoices::class);
     }
 
     public function test_tamu_diarahkan_non_admin_403_admin_ok(): void

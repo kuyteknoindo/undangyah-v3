@@ -11,6 +11,7 @@ use App\Services\BukuTamuPengaturan;
 use App\Services\CatatTayangan;
 use App\Services\MetaUndangan;
 use App\Services\Notifikasi;
+use App\Services\PenahananSlug;
 use App\Services\RenderUndangan;
 use App\Services\SlugUndangan;
 use Illuminate\Http\JsonResponse;
@@ -60,7 +61,9 @@ class UndanganPublikController extends Controller
         abort_if($this->slugLayanan->galatFormat($slug) !== null, 404);
 
         $u = Undangan::query()->where('slug', $slug)->first();
-        abort_unless($u, 404);
+        if (! $u) {
+            return $this->alihkanSlugLama($request, $slug);
+        }
 
         if (! $this->terbitan($u)) {
             // Pemilik yang membuka alamat drafnya sendiri diarahkan ke pratinjau; orang lain melihat 404 biasa.
@@ -115,6 +118,20 @@ class UndanganPublikController extends Controller
                 'musikAuto' => ($isi['musAuto'] ?? '1') === '1',
             ],
         ], 200, $this->headerHalaman());
+    }
+
+    /**
+     * Slug lama yang masih ditahan mengalihkan 301 ke slug undangan yang sama sekarang. Tujuan selalu dibentuk dari
+     * baris undangan di basis data (bukan dari input), dan hanya bila undangan itu masih ada dan terbit; selain itu 404.
+     * `/{slug lama}/rsvp` dan `/ucapan` sengaja tetap 404: form lama tidak boleh mengirim data lewat alamat yang sudah berpindah.
+     */
+    private function alihkanSlugLama(Request $request, string $slug): RedirectResponse
+    {
+        $tahan = app(PenahananSlug::class)->aktif($slug);
+        $tujuan = $tahan?->undangan_id ? Undangan::query()->find($tahan->undangan_id) : null;
+        abort_unless($tujuan && $tujuan->sudahTerbit() && filled($tujuan->slug) && $tujuan->slug !== $slug, 404);
+
+        return redirect()->to(route('undangan.publik', ['slug' => $tujuan->slug] + $request->query(), false), 301);
     }
 
     // ------------------------------------------------------------------ ucapan (baca)

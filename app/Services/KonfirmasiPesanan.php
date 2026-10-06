@@ -22,11 +22,16 @@ class KonfirmasiPesanan
 {
     public const DISK_BUKTI = 'local';
 
-    public function __construct(private Notifikasi $notifikasi) {}
+    public function __construct(private Notifikasi $notifikasi, private AturanPaket $aturan) {}
 
     /**
      * Tandai lunas dan aktifkan isinya (paket +durasi, add-on, voucher dihitung sekali, notifikasi).
      * Boleh dari `menunggu` maupun `kedaluwarsa` (uang sudah masuk setelah batas waktu). Pesanan batal/refund ditolak.
+     *
+     * Paket yang LEBIH RENDAH dari paket pembeli yang masih aktif (mis. paket tinggi aktif sesudah pesanan ini dibuat)
+     * tidak pernah menurunkan paket: pesanan tetap lunas (uang sudah masuk), item paketnya tidak diterapkan, dan
+     * pesanan ditandai `perlu_ditinjau_at` dengan catatan agar admin mengembalikan dana. Add-on pada pesanan yang
+     * sama tetap diterapkan seperti biasa (pembeli sudah membayarnya dan add-on tidak bergantung pada tingkat paket).
      *
      * @return bool true bila status berubah sekarang
      */
@@ -34,14 +39,15 @@ class KonfirmasiPesanan
     {
         $pesan = null;
         $user = null;
-        $berubah = DB::transaction(function () use ($pesanan, $catatan, &$pesan, &$user) {
+        $tinjau = [];
+        $berubah = DB::transaction(function () use ($pesanan, $catatan, &$pesan, &$user, &$tinjau) {
             $p = $this->kunci($pesanan);
             if (! in_array($p->status, [Pesanan::MENUNGGU, Pesanan::KEDALUWARSA], true)) {
                 return false;
             }
 
             $user = User::lockForUpdate()->findOrFail($p->user_id);
-            $ringkas = $this->aktifkan($p, $user, $peringatan);
+            $ringkas = $this->aktifkan($p, $user, $peringatan, $tinjau);
 
             if ($p->voucher_id && ! $p->voucher_ditahan) {
                 Voucher::whereKey($p->voucher_id)->increment('terpakai');
@@ -55,15 +61,25 @@ class KonfirmasiPesanan
             if ($catatanAkhir !== '') {
                 $p->catatan_admin = trim(($p->catatan_admin ? $p->catatan_admin."\n" : '').$catatanAkhir);
             }
+            if ($tinjau !== []) {
+                $p->perlu_ditinjau_at = now();
+                $p->catatan_tinjau = implode(' ', $tinjau);
+            }
             $p->save();
 
             $pesan = 'Pesanan '.$p->nomor.' ('.$p->ringkasItem().') sudah lunas. '.$ringkas;
+            if ($tinjau !== []) {
+                $pesan .= ' Tim kami akan menghubungimu untuk mengembalikan dana.';
+            }
 
             return true;
         });
 
         if ($berubah) {
-            $this->notifikasi->kirim($user, ModelNotifikasi::TIPE_PEMBAYARAN, 'Pembayaran diterima', $pesan, '/billing', ['pesanan' => $pesanan->nomor]);
+            $this->notifikasi->kirim($user, ModelNotifikasi::TIPE_PEMBAYARAN, $tinjau === [] ? 'Pembayaran diterima' : 'Pembayaran diterima, paket tidak diterapkan', $pesan, '/billing', ['pesanan' => $pesanan->nomor]);
+            if ($tinjau !== []) {
+                $this->beritahuAdminTinjau($pesanan, $tinjau);
+            }
         }
         $pesanan->refresh();
 
@@ -158,7 +174,9 @@ class KonfirmasiPesanan
             if ($p->status !== Pesanan::LUNAS) {
                 return false;
             }
-            if ($turunkanPaket) {
+            // Pesanan yang paketnya tidak pernah diterapkan (perlu ditinjau) tidak boleh menurunkan paket pembeli yang aktif dari pesanan lain.
+            $paketDiterapkan = $p->perlu_ditinjau_at === null && $p->selesai_ditinjau_at === null;
+            if ($turunkanPaket && $paketDiterapkan) {
                 $itemPaket = $p->item->firstWhere('tipe', ItemPesanan::PAKET);
                 $kode = $itemPaket ? (string) ($itemPaket->efek['paket'] ?? $itemPaket->kode) : null;
                 $user = User::lockForUpdate()->find($p->user_id);
@@ -168,6 +186,10 @@ class KonfirmasiPesanan
                     $user->save();
                     $turun = true;
                 }
+            }
+            if ($p->perlu_ditinjau_at !== null) {
+                $p->perlu_ditinjau_at = null;
+                $p->selesai_ditinjau_at = now();
             }
             $p->status = Pesanan::REFUND;
             $p->refund_at = now();
@@ -186,6 +208,35 @@ class KonfirmasiPesanan
                 '/billing',
             );
         }
+        $pesanan->refresh();
+
+        return $berubah;
+    }
+
+    /**
+     * Admin menyatakan pesanan "perlu ditinjau" sudah ditangani (mis. dana sudah dikembalikan di luar aplikasi).
+     * Idempoten: pesanan yang tidak sedang perlu ditinjau tidak berubah.
+     *
+     * @return bool true bila ada yang berubah
+     */
+    public function selesaiTinjau(Pesanan $pesanan, ?string $catatan = null): bool
+    {
+        $catatan = $catatan !== null ? trim($catatan) : '';
+
+        $berubah = DB::transaction(function () use ($pesanan, $catatan) {
+            $p = $this->kunci($pesanan);
+            if ($p->status !== Pesanan::LUNAS || $p->perlu_ditinjau_at === null) {
+                return false;
+            }
+            $p->perlu_ditinjau_at = null;
+            $p->selesai_ditinjau_at = now();
+            if ($catatan !== '') {
+                $p->catatan_tinjau = trim(($p->catatan_tinjau ? $p->catatan_tinjau."\n" : '').'Selesai ditinjau: '.$catatan);
+            }
+            $p->save();
+
+            return true;
+        });
         $pesanan->refresh();
 
         return $berubah;
@@ -241,6 +292,21 @@ class KonfirmasiPesanan
         return $jumlah;
     }
 
+    /** @param  list<string>  $alasan */
+    private function beritahuAdminTinjau(Pesanan $pesanan, array $alasan): void
+    {
+        foreach (User::where('role', User::PERAN_ADMIN)->pluck('id') as $adminId) {
+            $this->notifikasi->kirim(
+                $adminId,
+                ModelNotifikasi::TIPE_PEMBAYARAN,
+                'Pesanan perlu ditinjau',
+                'Pesanan '.$pesanan->nomor.' ('.$pesanan->pembeli_nama.') lunas tetapi paketnya tidak diterapkan. '.implode(' ', $alasan),
+                '/admin/pesanan?status=tinjau&cari='.$pesanan->nomor,
+                ['pesanan' => $pesanan->nomor],
+            );
+        }
+    }
+
     private function kunci(Pesanan $pesanan): Pesanan
     {
         return Pesanan::with('item')->lockForUpdate()->findOrFail($pesanan->id);
@@ -266,17 +332,26 @@ class KonfirmasiPesanan
      * Terapkan isi pesanan ke akun. Paket dulu, lalu add-on (perpanjangan add-on butuh paket yang sudah aktif).
      *
      * @param  list<string>|null  $peringatan
+     * @param  list<string>  $tinjau  diisi alasan bila ada item paket yang tidak diterapkan
      * @return string ringkasan untuk notifikasi
      */
-    private function aktifkan(Pesanan $p, User $user, ?array &$peringatan): string
+    private function aktifkan(Pesanan $p, User $user, ?array &$peringatan, array &$tinjau): string
     {
         $peringatan = [];
+        $tinjau = [];
         $ringkas = [];
         $item = $p->item->sortBy(fn (ItemPesanan $i) => $i->tipe === ItemPesanan::PAKET ? 0 : 1);
 
         foreach ($item as $it) {
             if ($it->tipe === ItemPesanan::PAKET) {
                 $kode = (string) ($it->efek['paket'] ?? $it->kode);
+                if ($bentrok = $this->aturan->bentrok($user, $kode)) {
+                    $ket = AturanPaket::keterangan($bentrok['sampai']);
+                    $tinjau[] = $bentrok['nama_aktif'].' sudah aktif '.$ket.'; pesanan '.$it->nama.' tidak diterapkan, kembalikan dana ke pembeli ('.TampilPesananAdmin::rp($it->harga).').';
+                    $ringkas[] = $it->nama.' tidak diterapkan karena '.$bentrok['nama_aktif'].' kamu masih aktif '.$ket.'.';
+
+                    continue;
+                }
                 $bulan = (int) ($it->efek['durasi_bulan'] ?? Paket::where('kode', $kode)->value('durasi_bulan'));
                 $sama = $user->paketAktif() === $kode;
                 if ($sama && $user->paket_sampai === null && $kode !== 'gratis') {

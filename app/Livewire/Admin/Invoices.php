@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\AksiPesananAdmin;
+use App\Models\LogAksiAdmin;
 use App\Models\Pesanan;
 use App\Services\CsvTamu;
 use App\Services\KuerPesananAdmin;
@@ -100,7 +101,10 @@ class Invoices extends Component
 
     public function ekspor(): ?StreamedResponse
     {
-        $this->pastikanAdmin();
+        $admin = $this->pastikanAdmin();
+        if (! $this->butuhSandi('Ekspor data invoice (CSV, berisi data pembeli)', 'ekspor')) {
+            return null;
+        }
         $kunci = 'invoice-ekspor:'.auth()->id();
         if (RateLimiter::tooManyAttempts($kunci, 10)) {
             $this->dispatch('toast', pesan: 'Terlalu banyak ekspor. Coba lagi sebentar lagi.', tipe: 'galat');
@@ -122,6 +126,8 @@ class Invoices extends Component
                 $p->subtotal, $p->diskon, $p->biaya, $p->kode_unik, $p->total, $p->metode_label, $p->infoStatus()[0], $p->dibayar_at?->format('Y-m-d H:i'),
             ]),
         );
+
+        LogAksiAdmin::catat($admin, 'ekspor_invoice', null, ['jumlah' => $baris->count(), 'status' => $this->status !== '' ? $this->status : null, 'cari' => trim($this->cari) !== '' ? trim($this->cari) : null]);
 
         return response()->streamDownload(function () use ($isi) {
             echo $isi;

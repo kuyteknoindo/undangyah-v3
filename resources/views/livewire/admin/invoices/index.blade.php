@@ -216,4 +216,6 @@
     </x-dialog>
 
     @include('livewire.admin.pesanan._konfirmasi')
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

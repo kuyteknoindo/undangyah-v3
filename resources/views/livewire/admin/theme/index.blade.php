@@ -121,4 +121,6 @@
             <button type="button" class="btn btn-danger-solid" wire:click="hapusPermanen" wire:loading.attr="disabled" wire:target="hapusPermanen">Hapus permanen</button>
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

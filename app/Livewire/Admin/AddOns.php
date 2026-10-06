@@ -3,9 +3,11 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
 use App\Models\AddOn;
 use App\Models\AddonPengguna;
 use App\Models\ItemPesanan;
+use App\Models\LogAksiAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +18,7 @@ use Livewire\Component;
 class AddOns extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     /** Dibaca KonfirmasiPesanan/KuotaUndangan lewat efeknya: tidak boleh dihapus, jenis efeknya terkunci. */
     public const SISTEM = ['kuota-undangan', 'perpanjang-masa-aktif'];
@@ -171,11 +174,16 @@ class AddOns extends Component
             'aktif' => (bool) $this->f['aktif'],
             'efek' => $efek === [] ? null : $efek,
         ];
+        $hargaLama = $addon?->harga;
         if ($addon) {
             $addon->update($data);
         } else {
-            AddOn::create($data + ['kode' => $this->kodeBaru($data['nama']), 'urutan' => (int) AddOn::max('urutan') + 1]);
+            $addon = AddOn::create($data + ['kode' => $this->kodeBaru($data['nama']), 'urutan' => (int) AddOn::max('urutan') + 1]);
         }
+        LogAksiAdmin::catat(auth()->user(), $hargaLama === null ? 'addon_buat' : 'addon_ubah', null, [
+            'addon' => $data['nama'], 'kode' => $addon->kode, 'aktif' => $data['aktif'],
+            'harga' => ['sebelum' => $hargaLama, 'sesudah' => $data['harga']],
+        ]);
 
         $this->dialogForm = false;
         $this->dispatch('toast', pesan: 'Add-on '.$data['nama'].' disimpan.', tipe: 'sukses');
@@ -247,6 +255,9 @@ class AddOns extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        if (! $this->butuhSandi('Hapus add-on', 'hapus')) {
+            return;
+        }
         $a = $this->hapusId ? AddOn::find($this->hapusId) : null;
         $this->dialogHapus = false;
         if (! $a || $this->sistem($a)) {
@@ -258,6 +269,7 @@ class AddOns extends Component
             return;
         }
         $a->delete();
+        LogAksiAdmin::catat(auth()->user(), 'addon_hapus', null, ['addon' => $a->nama, 'kode' => $a->kode]);
         $this->dispatch('toast', pesan: 'Add-on '.$a->nama.' dihapus.', tipe: 'sukses');
     }
 

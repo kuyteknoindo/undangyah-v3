@@ -18,7 +18,7 @@
     if ($h['kode_unik'] > 0) {
         $baris[] = ['label' => 'Kode unik untuk verifikasi transfer', 'jumlah' => '+ '.$rp($h['kode_unik']), 'gaya' => 'text-muted'];
     }
-    $bisaBayar = ! $kosong && $metodeDaftar->isNotEmpty() && $h['metode'] !== null;
+    $bisaBayar = ! $kosong && $paketDitolak === null && $metodeDaftar->isNotEmpty() && $h['metode'] !== null;
 @endphp
 <div class="mx-auto flex max-w-6xl flex-col gap-5">
     @if ($galat)
@@ -36,6 +36,17 @@
                     </div>
                     <a href="{{ $tautanBilling }}" wire:navigate class="btn btn-secondary btn-sm">Ubah di Paket &amp; Billing</a>
                 </div>
+
+                @if ($paketDitolak)
+                    <div role="alert" class="flex flex-wrap items-start gap-3 rounded-xl bg-danger-50 px-4 py-3 text-danger">
+                        <x-ikon nama="peringatan" :ukuran="18" class="mt-0.5 shrink-0" />
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm leading-5 font-semibold">{{ $paketDitolak['nama'] }} tidak bisa dibeli sekarang</div>
+                            <div class="text-[13px] leading-[18px]">{{ $paketDitolak['pesan'] }}</div>
+                        </div>
+                        <button type="button" wire:click="hapusPaket" class="btn btn-secondary btn-sm">Hapus dari pesanan</button>
+                    </div>
+                @endif
 
                 @if ($kosong)
                     <x-kosong judul="Keranjang masih kosong" teks="Tambahkan paket atau add-on di bawah, atau pilih dari halaman Paket & Billing." ikon="billing-keranjang" class="rounded-xl border border-dashed border-line-strong" />

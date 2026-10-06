@@ -18,10 +18,12 @@ use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyExceptio
 use Livewire\Livewire;
 use Tests\Concerns\PembuatBackupUji;
 use Tests\Concerns\SiapkanBackupUji;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminBackupTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
     use SiapkanBackupUji;
 
@@ -39,7 +41,7 @@ class AdminBackupTest extends TestCase
 
     private function halaman(?User $admin = null)
     {
-        return Livewire::actingAs($admin ?? User::factory()->admin()->create())->test(BackupRestore::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($admin ?? User::factory()->admin()->create()))->test(BackupRestore::class);
     }
 
     private function backupNyata(?User $oleh = null): Backup
@@ -314,7 +316,7 @@ class AdminBackupTest extends TestCase
         $this->get($url)->assertRedirect(route('masuk'));
         $this->actingAs(User::factory()->create())->get($url)->assertForbidden();
 
-        $r = $this->actingAs($admin)->get($url)->assertOk();
+        $r = $this->actingAs($admin)->withSession($this->sesiKonfirmasi($admin))->get($url)->assertOk();
         $r->assertHeader('content-disposition', 'attachment; filename='.$b->berkas);
         $r->assertHeader('x-content-type-options', 'nosniff');
         $r->assertHeader('x-checksum-sha256', $b->checksum);
@@ -326,7 +328,7 @@ class AdminBackupTest extends TestCase
     public function test_unduh_menolak_backup_gagal_hilang_atau_berkas_di_luar_folder(): void
     {
         $admin = User::factory()->admin()->create();
-        $this->actingAs($admin);
+        $this->actingAs($admin)->withSession($this->sesiKonfirmasi($admin));
         $this->get(route('admin.backup.unduh', Backup::factory()->gagal()->create()))->assertNotFound();
         $this->get(route('admin.backup.unduh', Backup::factory()->create()))->assertNotFound();
         $this->get(route('admin.backup.unduh', Backup::factory()->create(['berkas' => '../../.env'])))->assertNotFound();
@@ -342,7 +344,7 @@ class AdminBackupTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $b = $this->backupNyata();
-        $this->actingAs($admin);
+        $this->actingAs($admin)->withSession($this->sesiKonfirmasi($admin));
         RateLimiter::clear('backup-unduh:'.$admin->id);
         foreach (range(1, 20) as $_) {
             $this->get(route('admin.backup.unduh', $b))->assertOk();

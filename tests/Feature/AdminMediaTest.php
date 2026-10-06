@@ -16,11 +16,12 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Tests\Feature\Concerns\BerkasUji;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminMediaTest extends TestCase
 {
-    use BerkasUji, RefreshDatabase;
+    use BerkasUji, KonfirmasiSandiTes, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -31,7 +32,7 @@ class AdminMediaTest extends TestCase
 
     private function halaman(?User $user = null)
     {
-        return Livewire::actingAs($user ?? User::factory()->admin()->create())->test(PustakaMedia::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? User::factory()->admin()->create()))->test(PustakaMedia::class);
     }
 
     private function buat(string $nama, ?User $pemilik = null, array $atribut = []): Media

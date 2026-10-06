@@ -232,6 +232,11 @@ class BuatUndangan extends Component
             $this->addError('slug', 'Alamat ini sudah dipakai undangan lain.');
 
             return;
+        } catch (ValidationException $e) {
+            $this->langkah = 2;
+            $this->addError('slug', $e->errors()['slug'][0] ?? 'Alamat ini tidak bisa dipakai.');
+
+            return;
         }
 
         if ($undangan === null) {

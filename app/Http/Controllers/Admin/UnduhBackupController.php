@@ -5,20 +5,29 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Backup;
 use App\Models\LogAksiAdmin;
+use App\Services\KonfirmasiSandiAdmin;
 use App\Services\PembuatBackup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /** Mengalirkan berkas backup dari disk privat kepada admin. Nama berkas diambil dari catatan sistem, bukan dari input. */
 class UnduhBackupController extends Controller
 {
     private const BATAS_PER_JAM = 20;
 
-    public function __invoke(Request $request, Backup $backup, PembuatBackup $pembuat): BinaryFileResponse
+    public function __invoke(Request $request, Backup $backup, PembuatBackup $pembuat, KonfirmasiSandiAdmin $konfirmasi): BinaryFileResponse|RedirectResponse
     {
         $admin = $request->user();
         abort_unless($admin?->isAdmin(), 403);
+
+        // Berkas ini berisi seluruh data: tautan langsung tanpa konfirmasi sandi (masih berlaku 5 menit) dikembalikan ke halaman Backup.
+        if (! $konfirmasi->berlaku($admin)) {
+            session()->flash('toast', ['pesan' => 'Konfirmasi kata sandi diperlukan sebelum mengunduh backup. Klik Unduh lagi dan masukkan sandi.', 'tipe' => 'galat']);
+
+            return redirect()->route('admin.backup');
+        }
 
         $jalur = $backup->sukses() ? $pembuat->jalur($backup) : null;
         abort_unless($jalur, 404);

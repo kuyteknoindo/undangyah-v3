@@ -12,10 +12,12 @@ use Database\Seeders\PaketSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminMetodePembayaranTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -26,7 +28,7 @@ class AdminMetodePembayaranTest extends TestCase
 
     private function halaman(?User $user = null)
     {
-        return Livewire::actingAs($user ?? User::factory()->admin()->create())->test(Pembayaran::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? User::factory()->admin()->create()))->test(Pembayaran::class);
     }
 
     private function isiBank($k, array $f = [])

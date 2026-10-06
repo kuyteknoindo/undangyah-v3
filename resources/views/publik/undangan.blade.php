@@ -20,6 +20,9 @@
     <meta name="twitter:description" content="{{ $meta['deskripsi'] }}">
     <meta name="twitter:image" content="{{ $meta['gambar'] }}">
     <meta name="theme-color" content="{{ $latar }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('brand/favicon-32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('brand/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="/undangan/tamu.css?v={{ @filemtime(public_path('undangan/tamu.css')) }}">
 </head>
 <body style="--uy-latar: {{ $latar }}">

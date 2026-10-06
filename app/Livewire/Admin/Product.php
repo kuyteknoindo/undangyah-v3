@@ -3,7 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
 use App\Models\ItemPesanan;
+use App\Models\LogAksiAdmin;
 use App\Models\Paket;
 use App\Models\User;
 use App\Services\SinkronKuotaPaket;
@@ -17,6 +19,7 @@ use Livewire\Component;
 class Product extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     /** Dipakai sistem (kuota, masa aktif, tagihan): tidak boleh diarsipkan atau dihapus. */
     public const SISTEM = ['gratis', 'premium'];
@@ -213,6 +216,8 @@ class Product extends Component
             'populer' => $status !== Paket::ARSIP && (bool) $this->f['populer'],
         ];
 
+        $hargaLama = $paket?->harga;
+        $hargaCoretLama = $paket?->harga_coret;
         DB::transaction(function () use (&$paket, $data) {
             if ($paket) {
                 $paket->update($data);
@@ -224,6 +229,11 @@ class Product extends Component
             }
         });
         app(SinkronKuotaPaket::class)->sinkronkan();
+        LogAksiAdmin::catat(auth()->user(), $hargaLama === null ? 'paket_buat' : 'paket_ubah', null, [
+            'paket' => $data['nama'], 'kode' => $paket->kode, 'status' => $data['status'],
+            'harga' => ['sebelum' => $hargaLama, 'sesudah' => $data['harga']],
+            'harga_coret' => ['sebelum' => $hargaCoretLama, 'sesudah' => $data['harga_coret']],
+        ]);
 
         $this->dialogForm = false;
         $this->dispatch('toast', pesan: 'Paket '.$data['nama'].' disimpan.', tipe: 'sukses');
@@ -354,6 +364,9 @@ class Product extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        if ($this->aksiJenis === 'hapus' && ! $this->butuhSandi('Hapus paket', 'jalankanAksi')) {
+            return;
+        }
         $p = $this->aksiId ? Paket::find($this->aksiId) : null;
         $this->dialogKonfirmasi = false;
         if (! $p || $this->sistem($p)) {
@@ -369,6 +382,7 @@ class Product extends Component
                 return;
             }
             $p->delete();
+            LogAksiAdmin::catat(auth()->user(), 'paket_hapus', null, ['paket' => $p->nama, 'kode' => $p->kode]);
             $pesan = 'Paket '.$p->nama.' dihapus.';
         }
         app(SinkronKuotaPaket::class)->sinkronkan();

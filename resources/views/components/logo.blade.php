@@ -1,8 +1,6 @@
-{{-- Logo sementara berbentuk teks; gambar logo asli dipasang kemudian. --}}
+{{-- Lockup logo asli (409x95). Lebar tampil 164 px (md) atau 204 px (lg, tepat setengah ukuran asli untuk layar retina); atribut width/height mencegah layout shift. --}}
 @props(['ukuran' => 'md'])
-<span {{ $attributes->merge(['class' => 'inline-flex items-center gap-2 font-semibold tracking-tight text-ink']) }}>
-    <span class="flex {{ $ukuran === 'lg' ? 'size-12 rounded-xl' : 'size-9 rounded-[10px]' }} items-center justify-center bg-brand text-white">
-        <x-ikon nama="surel" :ukuran="$ukuran === 'lg' ? 24 : 18" />
-    </span>
-    <span class="{{ $ukuran === 'lg' ? 'text-2xl' : 'text-lg' }} leading-none">undangyah</span>
-</span>
+@php
+    [$lebar, $tinggi] = $ukuran === 'lg' ? [204, 47] : [164, 38];
+@endphp
+<img src="{{ asset('brand/undangyah-logo-full.png') }}" alt="undangyah.com, undangan digital" width="{{ $lebar }}" height="{{ $tinggi }}" decoding="async" {{ $attributes->merge(['class' => 'block h-auto max-w-full']) }}>

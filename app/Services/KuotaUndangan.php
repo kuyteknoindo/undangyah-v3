@@ -20,11 +20,7 @@ use App\Models\User;
  */
 class KuotaUndangan
 {
-    /** Peringkat bawaan bila katalog paket kosong (mis. sebelum seeder berjalan). */
-    private const PERINGKAT_BAWAAN = ['gratis' => 0, 'premium' => 1, 'deluxe' => 2];
-
-    /** @var array<string,int>|null */
-    private ?array $peringkat = null;
+    public function __construct(private AturanPaket $aturan) {}
 
     public function aktif(): bool
     {
@@ -39,20 +35,13 @@ class KuotaUndangan
     }
 
     /**
-     * Peringkat paket (kode => urutan naik) dari katalog: Gratis paling rendah, lalu menurut harga, urutan, dan id.
-     * Dengan begitu paket buatan admin ikut punya peringkat untuk membandingkan dengan `tema.tier`.
+     * Peringkat paket (kode => urutan naik); sumbernya `AturanPaket`, satu-satunya penentu tingkat paket.
      *
      * @return array<string,int>
      */
     public function peringkat(): array
     {
-        if ($this->peringkat === null) {
-            $kode = Paket::query()->orderBy('harga')->orderBy('urutan')->orderBy('id')->pluck('kode')->all();
-            usort($kode, fn ($a, $b) => ($b === 'gratis') <=> ($a === 'gratis'));
-            $this->peringkat = $kode === [] ? self::PERINGKAT_BAWAAN : array_flip(array_values($kode));
-        }
-
-        return $this->peringkat;
+        return $this->aturan->peringkat();
     }
 
     /** Batas jumlah undangan, atau null bila tanpa batas. */

@@ -6,6 +6,7 @@ use App\Models\AddOn;
 use App\Models\AddonPengguna;
 use App\Models\Paket;
 use App\Models\Pesanan;
+use App\Services\AturanPaket;
 use App\Services\DataTagihan;
 use App\Services\HitungPesanan;
 use App\Services\Keranjang;
@@ -50,11 +51,16 @@ class PaketBilling extends Component
     }
 
     /** Pilih paket (beli/perpanjang) lalu lanjut ke Checkout. Kode divalidasi terhadap katalog. */
-    public function pilihPaket(string $kode, Keranjang $keranjang)
+    public function pilihPaket(string $kode, Keranjang $keranjang, AturanPaket $aturan)
     {
         $paket = Paket::where('kode', $kode)->first();
         if (! $paket || ! $paket->dapatDibeli()) {
             $this->dispatch('toast', pesan: 'Paket ini belum bisa dibeli.', tipe: 'galat');
+
+            return;
+        }
+        if ($bentrok = $aturan->bentrok(auth()->user(), $paket->kode)) {
+            $this->dispatch('toast', pesan: $bentrok['pesan'], tipe: 'galat');
 
             return;
         }
@@ -86,7 +92,7 @@ class PaketBilling extends Component
         $this->dispatch('toast', pesan: 'Data tagihan disimpan.', tipe: 'sukses');
     }
 
-    public function render(RingkasanAkun $ringkasan, KuotaUndangan $kuota, HitungPesanan $hitung, Keranjang $keranjang)
+    public function render(RingkasanAkun $ringkasan, KuotaUndangan $kuota, HitungPesanan $hitung, Keranjang $keranjang, AturanPaket $aturan)
     {
         $user = auth()->user();
         $info = $ringkasan->paket($user);
@@ -117,6 +123,10 @@ class PaketBilling extends Component
         })->values();
         $menunggu = $pesanan->first(fn (Pesanan $p) => $p->menunggu());
 
+        $daftarPaket = Paket::tampil()->get();
+        // kode => pesan penolakan untuk paket yang lebih rendah dari paket aktif; tombol belinya dinonaktifkan di tampilan.
+        $bentrok = $daftarPaket->mapWithKeys(fn (Paket $p) => [$p->kode => $aturan->bentrok($user, $p->kode)['pesan'] ?? null])->filter()->all();
+
         $durasiHari = max(1, ($paketAktif?->durasi_bulan ?: 12) * 30);
         $sisa = $info['sisaHari'];
 
@@ -128,7 +138,8 @@ class PaketBilling extends Component
             'batas' => $kuota->batas($user),
             'terpakai' => $kuota->terpakai($user),
             'tambahanKuota' => $kuota->tambahan($user),
-            'daftarPaket' => Paket::tampil()->get(),
+            'daftarPaket' => $daftarPaket,
+            'bentrok' => $bentrok,
             'addon' => $addon,
             'dimiliki' => $dimiliki,
             'milikList' => $milikList,

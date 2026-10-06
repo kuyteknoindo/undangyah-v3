@@ -7,6 +7,9 @@
     $labelStatus = fn (string $s): string => $s === Pesanan::REFUND ? 'Refund' : (Pesanan::STATUS[$s][0] ?? ucfirst($s));
     $warnaStatus = fn (string $s): string => $s === Pesanan::REFUND ? 'biru' : (Pesanan::STATUS[$s][1] ?? 'abu');
     $chips = [['', 'Semua', 'semua'], ['menunggu', 'Menunggu', 'menunggu'], ['lunas', 'Lunas', 'lunas'], ['kedaluwarsa', 'Kedaluwarsa', 'kedaluwarsa'], ['batal', 'Dibatalkan', 'batal'], ['refund', 'Refund', 'refund']];
+    if ($hitung['tinjau']['n'] > 0 || $status === 'tinjau') {
+        $chips[] = ['tinjau', 'Perlu ditinjau', 'tinjau'];
+    }
     $konversi = $kpi['semua'] > 0 ? (int) round($kpi['pernahBayar'] / $kpi['semua'] * 100) : 0;
 @endphp
 <div class="mx-auto flex max-w-[1180px] flex-col gap-5">
@@ -19,6 +22,17 @@
             <button type="button" wire:click="ekspor" wire:loading.attr="disabled" wire:target="ekspor" class="btn btn-secondary btn-sm"><x-ikon nama="ap-unduh" :ukuran="15" /> Ekspor CSV</button>
         </div>
     </div>
+
+    @if ($hitung['tinjau']['n'] > 0 && $status !== 'tinjau')
+        <div role="alert" class="flex flex-wrap items-center gap-3 rounded-xl bg-warning-50 px-4 py-3 text-warning">
+            <x-ikon nama="peringatan" :ukuran="20" class="shrink-0" />
+            <div class="min-w-0 flex-1">
+                <div class="text-sm leading-5 font-semibold">{{ $angka($hitung['tinjau']['n']) }} pesanan perlu ditinjau ({{ $rp($hitung['tinjau']['nilai']) }})</div>
+                <div class="text-[13px] leading-[18px]">Sudah lunas, tetapi paketnya tidak diterapkan karena pembeli punya paket lebih tinggi yang masih aktif. Kembalikan dana atau tandai selesai.</div>
+            </div>
+            <button type="button" wire:click="pilihStatus('tinjau')" class="btn btn-secondary btn-sm">Tampilkan</button>
+        </div>
+    @endif
 
     <section aria-label="Ringkasan pesanan" class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <div class="kartu kpi"><div class="flex items-center justify-between"><span class="kpi-l">Pesanan hari ini</span><x-ikon nama="ap-tas" :ukuran="16" class="text-subtle" /></div><div class="kpi-v">{{ $angka($kpi['hari']) }}</div><div class="hint">{{ $rp($kpi['hariNilai']) }} lunas hari ini</div></div>
@@ -123,6 +137,7 @@
                                 <td class="whitespace-nowrap">{{ $p->metode_label ?? '-' }}</td>
                                 <td>
                                     <x-pill :warna="$warnaStatus($st)">{{ $labelStatus($st) }}</x-pill>
+                                    @if ($p->perluDitinjau())<div class="mt-1"><x-pill warna="merah">Perlu ditinjau</x-pill></div>@endif
                                     @if ($p->bukti_path && $st === 'menunggu')<div class="hint mt-1">Bukti {{ $p->ditunda_at ? '(Pending)' : 'perlu dicek' }}</div>@endif
                                 </td>
                                 <td>
@@ -163,8 +178,16 @@
             <div class="flex flex-wrap items-center gap-2">
                 <x-pill :warna="$warnaStatus($st)">{{ $labelStatus($st) }}</x-pill>
                 @if ($p->ditunda_at && $p->status === 'menunggu')<x-pill warna="kuning">Pending</x-pill>@endif
+                @if ($p->perluDitinjau())<x-pill warna="merah">Perlu ditinjau</x-pill>@endif
                 @if ($p->status === 'menunggu' && $st === 'menunggu')<span class="hint">Batas bayar {{ T::tgl($p->kedaluwarsa_at) }} ({{ T::sisa($p->kedaluwarsa_at) }})</span>@endif
             </div>
+
+            @if ($p->catatan_tinjau && ($p->perluDitinjau() || $p->selesai_ditinjau_at))
+                <div role="note" class="flex items-start gap-2 rounded-xl px-3 py-2.5 text-[13px] leading-[18px] {{ $p->perluDitinjau() ? 'bg-warning-50 text-warning' : 'bg-gray-50 text-body' }}">
+                    <x-ikon nama="peringatan" :ukuran="16" class="mt-px shrink-0" />
+                    <div class="min-w-0 break-words whitespace-pre-line"><strong>{{ $p->perluDitinjau() ? 'Perlu ditinjau.' : 'Sudah ditinjau.' }}</strong> {{ $p->catatan_tinjau }}</div>
+                </div>
+            @endif
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div class="rounded-xl border border-line p-4">
@@ -233,6 +256,7 @@
                 @if ($detail['p']->status === 'menunggu' && $detail['p']->bukti_path)<button type="button" wire:click="tunda({{ $detail['p']->id }})" class="btn btn-secondary"><x-ikon nama="ap-tunda" :ukuran="16" /> {{ $detail['p']->ditunda_at ? 'Lepas Pending' : 'Pending' }}</button>@endif
                 @if (in_array('tolak', $detail['aksi'], true))<button type="button" wire:click="tanya({{ $detail['p']->id }}, 'tolak')" class="btn btn-danger"><x-ikon nama="ap-tolak" :ukuran="16" /> Tolak bukti</button>@endif
                 @if (in_array('batal', $detail['aksi'], true))<button type="button" wire:click="tanya({{ $detail['p']->id }}, 'batal')" class="btn btn-danger"><x-ikon nama="tutup" :ukuran="16" /> Batalkan</button>@endif
+                @if (in_array('tinjau', $detail['aksi'], true))<button type="button" wire:click="tanya({{ $detail['p']->id }}, 'tinjau')" class="btn btn-secondary"><x-ikon nama="centang" :ukuran="16" /> Tandai selesai ditinjau</button>@endif
                 @if (in_array('refund', $detail['aksi'], true))<button type="button" wire:click="tanya({{ $detail['p']->id }}, 'refund')" class="btn btn-danger"><x-ikon nama="ap-refund" :ukuran="16" /> Refund</button>@endif
                 @if (in_array('lunas', $detail['aksi'], true))<button type="button" wire:click="tanya({{ $detail['p']->id }}, 'lunas')" class="btn btn-primary"><x-ikon nama="ap-lunas" :ukuran="16" /> Tandai lunas</button>@endif
                 @if ($detail['aksi'] === [])<button type="button" wire:click="tutupDetail" class="btn btn-secondary">Tutup</button>@endif
@@ -241,4 +265,6 @@
     </x-dialog>
 
     @include('livewire.admin.pesanan._konfirmasi')
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

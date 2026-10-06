@@ -187,7 +187,13 @@ class KonfirmasiPembayaran extends Component
         $efek = [];
         if ($pesanan && $status === Pesanan::LUNAS) {
             $user = auth()->user();
+            $tidakDiterapkan = $pesanan->perlu_ditinjau_at !== null || $pesanan->selesai_ditinjau_at !== null;
             foreach ($pesanan->item as $it) {
+                if ($it->tipe === ItemPesanan::PAKET && $tidakDiterapkan) {
+                    $efek[] = $it->nama.' tidak diterapkan karena paket yang lebih tinggi di akunmu masih aktif'.($user->paket_sampai ? ' sampai '.$user->paket_sampai->locale('id')->translatedFormat('j M Y') : '').'. Dana pesanan ini akan dikembalikan oleh tim kami.';
+
+                    continue;
+                }
                 $efek[] = $it->tipe === ItemPesanan::PAKET
                     ? $it->nama.' aktif'.($user->paket_sampai ? ' sampai '.$user->paket_sampai->locale('id')->translatedFormat('j M Y') : '').'.'
                     : 'Add-on aktif: '.$it->nama.'.';

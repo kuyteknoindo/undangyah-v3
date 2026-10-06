@@ -52,7 +52,10 @@
                 </div>
             @endif
             <div class="flex flex-wrap gap-2.5">
-                @php $beli = $daftarPaket->first(fn ($p) => $p->dapatDibeli()); @endphp
+                @php $beli = $daftarPaket->first(fn ($p) => $p->dapatDibeli() && ! isset($bentrok[$p->kode])); @endphp
+                @if ($bentrok !== [] && $berbayar)
+                    <div class="hint w-full">Paket yang lebih rendah tidak bisa dibeli selama {{ $namaAktif }} masih aktif. Add-on tetap bisa dibeli.</div>
+                @endif
                 @if ($beli && ! $berbayar)
                     <button type="button" wire:click="pilihPaket('{{ $beli->kode }}')" class="btn btn-primary">{{ $pernahBerbayar ? 'Perpanjang ke '.$beli->nama : 'Upgrade ke '.$beli->nama }}</button>
                 @elseif ($beli && $aktif === $beli->kode)
@@ -116,7 +119,10 @@
                         @endforeach
                     </ul>
                     <div class="mt-auto flex flex-col gap-2">
-                        @if ($bisaBeli && (! $sekarang || $berbayar))
+                        @if ($bisaBeli && isset($bentrok[$p->kode]))
+                            <button type="button" class="btn btn-secondary btn-lg" disabled aria-describedby="bentrok-{{ $p->kode }}">Tidak tersedia</button>
+                            <div id="bentrok-{{ $p->kode }}" class="hint">{{ $bentrok[$p->kode] }}</div>
+                        @elseif ($bisaBeli && (! $sekarang || $berbayar))
                             <button type="button" wire:click="pilihPaket('{{ $p->kode }}')" class="btn {{ $sekarang ? 'btn-secondary' : 'btn-primary' }} btn-lg">{{ $sekarang ? 'Perpanjang '.$p->durasi_bulan.' bulan' : ($pernahBerbayar ? 'Perpanjang ke '.$p->nama : 'Upgrade ke '.$p->nama) }}</button>
                         @elseif ($sekarang)
                             <button type="button" class="btn btn-secondary btn-lg" disabled>Paket saat ini</button>

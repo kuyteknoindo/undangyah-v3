@@ -14,6 +14,9 @@ class KuerPesananAdmin
 {
     public const STATUS = ['menunggu', 'lunas', 'kedaluwarsa', 'batal', 'refund'];
 
+    /** Filter khusus (bukan status): pesanan lunas yang isinya tidak sepenuhnya diterapkan dan menunggu keputusan admin. */
+    public const TINJAU = 'tinjau';
+
     public const PERIODE = ['', 'today', '7', '30', 'month', 'custom'];
 
     public const URUTAN = ['baru', 'lama', 'tinggi', 'rendah'];
@@ -38,7 +41,9 @@ class KuerPesananAdmin
     public function saring(Builder $q, string $status = '', string $cari = '', string $metode = '', string $periode = '', string $dari = '', string $sampai = ''): Builder
     {
         $this->terapkanDasar($q, $cari, $metode, $periode, $dari, $sampai);
-        if (in_array($status, self::STATUS, true)) {
+        if ($status === self::TINJAU) {
+            $q->whereNotNull('perlu_ditinjau_at');
+        } elseif (in_array($status, self::STATUS, true)) {
             $q->whereRaw(self::kondisi($status), self::ikatan($status));
         }
 
@@ -125,7 +130,7 @@ class KuerPesananAdmin
     /**
      * Jumlah dan nilai per status efektif, dalam satu kueri.
      *
-     * @return array{semua:array{n:int,nilai:int}, menunggu:array{n:int,nilai:int}, lunas:array{n:int,nilai:int}, kedaluwarsa:array{n:int,nilai:int}, batal:array{n:int,nilai:int}, refund:array{n:int,nilai:int}}
+     * @return array{semua:array{n:int,nilai:int}, menunggu:array{n:int,nilai:int}, lunas:array{n:int,nilai:int}, kedaluwarsa:array{n:int,nilai:int}, batal:array{n:int,nilai:int}, refund:array{n:int,nilai:int}, tinjau:array{n:int,nilai:int}}
      */
     public function hitungPerStatus(Builder $q): array
     {
@@ -136,9 +141,11 @@ class KuerPesananAdmin
             $sel[] = 'coalesce(sum(case when '.self::kondisi($s).' then total else 0 end), 0) as '.$s.'_nilai';
             array_push($ikat, ...self::ikatan($s), ...self::ikatan($s));
         }
+        $sel[] = 'coalesce(sum(case when perlu_ditinjau_at is not null then 1 else 0 end), 0) as tinjau_n';
+        $sel[] = 'coalesce(sum(case when perlu_ditinjau_at is not null then total else 0 end), 0) as tinjau_nilai';
         $r = $q->toBase()->selectRaw(implode(', ', $sel), $ikat)->first();
 
-        $hasil = ['semua' => ['n' => (int) ($r->semua_n ?? 0), 'nilai' => (int) ($r->semua_nilai ?? 0)]];
+        $hasil = ['tinjau' => ['n' => (int) ($r->tinjau_n ?? 0), 'nilai' => (int) ($r->tinjau_nilai ?? 0)], 'semua' => ['n' => (int) ($r->semua_n ?? 0), 'nilai' => (int) ($r->semua_nilai ?? 0)]];
         foreach (self::STATUS as $s) {
             $hasil[$s] = ['n' => (int) ($r->{$s.'_n'} ?? 0), 'nilai' => (int) ($r->{$s.'_nilai'} ?? 0)];
         }

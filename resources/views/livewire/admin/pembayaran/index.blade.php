@@ -225,4 +225,6 @@
             <button type="button" class="btn btn-danger-solid" wire:click="hapus" wire:loading.attr="disabled" wire:target="hapus">Hapus metode</button>
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

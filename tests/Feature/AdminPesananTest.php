@@ -15,10 +15,12 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminPesananTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -54,7 +56,7 @@ class AdminPesananTest extends TestCase
 
     private function halaman(?User $admin = null)
     {
-        return Livewire::actingAs($admin ?? $this->admin())->test(DataPesanan::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($admin ?? $this->admin()))->test(DataPesanan::class);
     }
 
     // ---- akses

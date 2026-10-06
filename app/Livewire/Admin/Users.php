@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
+use App\Models\LogAksiAdmin;
 use App\Models\Paket;
 use App\Models\User;
 use App\Services\CsvTamu;
@@ -22,6 +24,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Panel Admin > Users: daftar, detail, dan aksi atas akun pengguna. Semua aksi lewat PengelolaPengguna. */
 class Users extends Component
 {
+    use MintaKonfirmasiSandi;
+
     public const PER_HALAMAN = 15;
 
     public const MAKS_EKSPOR = 5000;
@@ -29,6 +33,15 @@ class Users extends Component
     private const URUTAN = ['baru' => 'Terbaru bergabung', 'lama' => 'Terlama bergabung', 'nama' => 'Nama A-Z', 'login' => 'Login terakhir'];
 
     private const JENIS_AKSI = ['peran', 'paket', 'tangguh', 'hapus', 'masuk'];
+
+    /** Semua jenis aksi dialog ini sensitif dan wajib konfirmasi sandi (lihat KonfirmasiSandiAdmin). */
+    private const LABEL_SANDI = [
+        'peran' => 'Ubah peran pengguna',
+        'paket' => 'Ubah paket pengguna secara manual',
+        'tangguh' => 'Tangguhkan akun pengguna',
+        'hapus' => 'Hapus pengguna',
+        'masuk' => 'Masuk sebagai pengguna',
+    ];
 
     #[Url(as: 'q', except: '')]
     public string $q = '';
@@ -164,6 +177,9 @@ class Users extends Component
             switch ($this->jenisAksi) {
                 case 'peran':
                     $this->validate(['peranBaru' => ['required', 'in:user,admin']], [], ['peranBaru' => 'Peran']);
+                    if (! $this->butuhSandi(self::LABEL_SANDI['peran'], 'jalankanAksi')) {
+                        return null;
+                    }
                     $pengelola->ubahPeran($admin, $t, $this->peranBaru);
                     $pesan = 'Peran '.$t->name.' kini '.$pengelola->labelPeran($this->peranBaru).'.';
                     break;
@@ -178,17 +194,31 @@ class Users extends Component
                         'paketSampai.date_format' => 'Format tanggal tidak valid.',
                     ], ['paketBaru' => 'Paket', 'catatanPaket' => 'Catatan'])['paketBaru'];
                     $sampai = $this->tanpaBatas || $kode === 'gratis' ? null : Carbon::createFromFormat('Y-m-d', $this->paketSampai)->endOfDay();
+                    if (! $this->butuhSandi(self::LABEL_SANDI['paket'], 'jalankanAksi')) {
+                        return null;
+                    }
                     $pengelola->aturPaket($admin, $t, $kode, $sampai, $this->catatanPaket);
                     $pesan = 'Paket '.$t->name.' diperbarui.';
                     break;
 
                 case 'tangguh':
                     $this->validate(['alasanTangguh' => ['nullable', 'string', 'max:200']], [], ['alasanTangguh' => 'Alasan']);
+                    if (! $this->butuhSandi(self::LABEL_SANDI['tangguh'], 'jalankanAksi')) {
+                        return null;
+                    }
                     $pengelola->tangguhkan($admin, $t, $this->alasanTangguh);
                     $pesan = $t->name.' ditangguhkan. Sesinya diputus.';
                     break;
 
                 case 'hapus':
+                    if (mb_strtolower(trim($this->emailKonfirmasi)) !== mb_strtolower($t->email)) {
+                        $this->addError('aksi', 'Email konfirmasi tidak cocok.');
+
+                        return null;
+                    }
+                    if (! $this->butuhSandi(self::LABEL_SANDI['hapus'], 'jalankanAksi')) {
+                        return null;
+                    }
                     if ($this->batasi('admin-users-hapus', 10, 600)) {
                         return null;
                     }
@@ -199,6 +229,9 @@ class Users extends Component
                     break;
 
                 case 'masuk':
+                    if (! $this->butuhSandi(self::LABEL_SANDI['masuk'], 'jalankanAksi')) {
+                        return null;
+                    }
                     if ($this->batasi('admin-users-masuk', 10, 600)) {
                         return null;
                     }
@@ -222,7 +255,10 @@ class Users extends Component
 
     public function ekspor(): ?StreamedResponse
     {
-        $this->admin();
+        $admin = $this->admin();
+        if (! $this->butuhSandi('Ekspor data pengguna (CSV)', 'ekspor')) {
+            return null;
+        }
         if ($this->batasi('admin-users-ekspor', 5, 60)) {
             return null;
         }
@@ -232,6 +268,7 @@ class Users extends Component
             $u->paket_sampai?->format('Y-m-d'), (int) $u->undangan_count, $this->labelStatus($u)[0],
             $u->created_at?->format('Y-m-d H:i'), $u->login_terakhir_at?->format('Y-m-d H:i'),
         ]);
+        LogAksiAdmin::catat($admin, 'ekspor_pengguna', null, ['jumlah' => $baris->count(), 'filter' => array_filter(['q' => trim($this->q), 'paket' => $this->paket !== 'semua' ? $this->paket : null, 'status' => $this->status, 'peran' => $this->peran])]);
         $isi = app(CsvTamu::class)->tulis(['Nama', 'Email', 'HP', 'Peran', 'Paket', 'Paket sampai', 'Undangan', 'Status', 'Bergabung', 'Login terakhir'], $baris);
 
         return response()->streamDownload(function () use ($isi) {

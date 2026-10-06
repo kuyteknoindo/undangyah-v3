@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ItemPesanan;
 use App\Models\Paket;
 use App\Models\Pesanan;
+use App\Models\User;
 use Carbon\CarbonInterface;
 
 /** Pemformatan pesanan untuk halaman admin: rupiah, tanggal, tujuan bayar, riwayat status, dan pratinjau efek pelunasan. */
@@ -98,6 +99,11 @@ class TampilPesananAdmin
         if ($p->dibayar_at) {
             $baris[] = [$p->dibayar_at, 'Pembayaran dikonfirmasi lunas', null];
         }
+        if ($p->perlu_ditinjau_at) {
+            $baris[] = [$p->perlu_ditinjau_at, 'Perlu ditinjau admin', $p->catatan_tinjau];
+        } elseif ($p->selesai_ditinjau_at) {
+            $baris[] = [$p->selesai_ditinjau_at, 'Selesai ditinjau admin', $p->catatan_tinjau];
+        }
         if ($p->refund_at) {
             $baris[] = [$p->refund_at, 'Ditandai refund', $p->catatan_admin];
         }
@@ -112,6 +118,21 @@ class TampilPesananAdmin
         return array_map(fn ($b) => ['judul' => $b[1], 'waktu' => self::tgl($b[0]), 'rinci' => $b[2] ?: null], $baris);
     }
 
+    /** Peringatan bila item paket pesanan ini akan ditolak aturan paket saat ditandai lunas sekarang; null bila aman. */
+    public static function bentrokPaket(Pesanan $p): ?string
+    {
+        $itemPaket = $p->item->firstWhere('tipe', ItemPesanan::PAKET);
+        $user = $itemPaket ? User::find($p->user_id) : null;
+        if (! $user) {
+            return null;
+        }
+        $bentrok = app(AturanPaket::class)->bentrok($user, (string) ($itemPaket->efek['paket'] ?? $itemPaket->kode));
+
+        return $bentrok
+            ? $bentrok['nama_aktif'].' pembeli masih aktif '.AturanPaket::keterangan($bentrok['sampai']).'. Bila ditandai lunas, '.$itemPaket->nama.' TIDAK diterapkan (paket tidak diturunkan); pesanan ditandai Perlu ditinjau agar dana dikembalikan.'
+            : null;
+    }
+
     /**
      * Efek yang akan terjadi bila pesanan ditandai lunas, untuk dialog konfirmasi.
      *
@@ -123,6 +144,11 @@ class TampilPesananAdmin
         foreach ($p->item as $i) {
             if ($i->tipe === ItemPesanan::PAKET) {
                 $kode = (string) ($i->efek['paket'] ?? $i->kode);
+                if (self::bentrokPaket($p) !== null) {
+                    $efek[] = $i->nama.' tidak diterapkan (ada paket lebih tinggi yang aktif); pesanan ditandai Perlu ditinjau.';
+
+                    continue;
+                }
                 $bulan = (int) ($i->efek['durasi_bulan'] ?? Paket::where('kode', $kode)->value('durasi_bulan'));
                 $efek[] = $i->nama.' diaktifkan'.($bulan > 0 ? ' selama '.$bulan.' bulan' : '').'.';
             } else {

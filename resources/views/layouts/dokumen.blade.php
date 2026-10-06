@@ -8,6 +8,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="{{ $indeks ? 'index, follow' : 'noindex, nofollow' }}">
+    <x-meta-brand :og="true" :judul="$judul.' · '.config('app.name')" />
     <title>{{ $judul }} · {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -15,7 +16,7 @@
 <div class="flex min-h-screen flex-col">
     <a href="#konten" class="sr-only z-[80] rounded-lg bg-white px-3 py-2 text-sm font-semibold text-brand focus:not-sr-only focus:fixed focus:top-3 focus:left-3">Lewati ke konten</a>
     <header class="flex min-h-[68px] items-center justify-between gap-3 border-b border-line bg-white px-4 sm:px-6 lg:px-8">
-        <a href="{{ url('/') }}" aria-label="undangyah, beranda"><x-logo /></a>
+        <a href="{{ url('/') }}" title="Ke beranda"><x-logo /></a>
         <nav aria-label="Akun" class="flex items-center gap-2">
             @auth
                 <a href="{{ route('beranda') }}" class="btn btn-secondary btn-sm">Ke aplikasi</a>

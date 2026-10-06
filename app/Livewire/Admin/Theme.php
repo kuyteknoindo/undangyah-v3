@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
+use App\Models\LogAksiAdmin;
 use App\Models\Tema;
 use App\Services\DokumenTema;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,7 @@ use Livewire\Component;
 class Theme extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     public const URUTAN = ['urutan' => 'Urutan katalog', 'nama' => 'Nama A-Z', 'terbaru' => 'Terbaru diubah', 'dipakai' => 'Paling banyak dipakai'];
 
@@ -225,6 +228,9 @@ class Theme extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        if (! $this->butuhSandi('Hapus tema permanen', 'hapusPermanen')) {
+            return;
+        }
         $t = $this->hapusId ? Tema::onlyTrashed()->find($this->hapusId) : null;
         $this->dialogHapus = false;
         $this->hapusId = null;
@@ -235,6 +241,7 @@ class Theme extends Component
         }
         $nama = $t->nama;
         $t->forceDelete();
+        LogAksiAdmin::catat(auth()->user(), 'tema_hapus_permanen', null, ['tema' => $nama]);
         $this->dispatch('toast', pesan: '"'.$nama.'" dihapus permanen.', tipe: 'sukses');
     }
 

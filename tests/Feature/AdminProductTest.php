@@ -15,10 +15,12 @@ use Database\Seeders\PaketSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminProductTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -34,7 +36,7 @@ class AdminProductTest extends TestCase
 
     private function halaman(?User $user = null)
     {
-        return Livewire::actingAs($user ?? $this->admin())->test(Product::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? $this->admin()))->test(Product::class);
     }
 
     private function isi($komponen, array $f = [], array $fitur = ['Fitur satu'])

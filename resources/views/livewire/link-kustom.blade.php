@@ -141,7 +141,7 @@
                     <h2 class="h2">Saat link diganti</h2>
                     <ul class="m-0 flex list-none flex-col gap-2.5 p-0 text-[13px] leading-5 text-body">
                         @foreach ([
-                            'Link lama langsung tidak bisa dibuka. Tamu yang sudah menerima link lama perlu dikirimi link baru.',
+                            'Link lama dialihkan ke link baru selama '.\App\Services\PenahananSlug::HARI.' hari, dan tidak bisa dipakai orang lain selama itu. Setelahnya link lama tidak aktif, jadi kirim link baru ke tamu.',
                             'RSVP, ucapan, dan data kunjungan ikut pindah ke link baru.',
                             'Isi dan tema undangan tidak berubah.',
                             "Aturan: $min sampai $maks karakter, huruf kecil, angka, dan tanda hubung. Kata seperti admin, api, login, dan daftar dicadangkan sistem.",

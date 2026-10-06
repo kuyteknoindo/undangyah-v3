@@ -309,4 +309,6 @@
             </button>
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

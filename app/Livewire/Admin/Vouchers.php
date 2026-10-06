@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
+use App\Models\LogAksiAdmin;
 use App\Models\Paket;
 use App\Models\Pesanan;
 use App\Models\Voucher;
@@ -20,6 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class Vouchers extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     private const PER_HALAMAN = 15;
 
@@ -199,7 +202,12 @@ class Vouchers extends Component
             'aktif' => (bool) $this->f['aktif'],
         ];
         // `terpakai` hanya berubah lewat pesanan (KonfirmasiPesanan), tidak pernah lewat form.
+        $lama = $voucher ? ['jenis' => $voucher->jenis, 'nilai' => $voucher->nilai, 'aktif' => (bool) $voucher->aktif, 'batas_pakai' => $voucher->batas_pakai] : null;
         $voucher ? $voucher->update($data) : Voucher::create($data + ['terpakai' => 0]);
+        LogAksiAdmin::catat(auth()->user(), $lama === null ? 'voucher_buat' : 'voucher_ubah', null, [
+            'kode' => $data['kode'], 'sebelum' => $lama,
+            'sesudah' => ['jenis' => $data['jenis'], 'nilai' => $data['nilai'], 'aktif' => $data['aktif'], 'batas_pakai' => $data['batas_pakai']],
+        ]);
 
         $this->dialogForm = false;
         $this->dispatch('toast', pesan: 'Voucher '.$data['kode'].' disimpan.', tipe: 'sukses');
@@ -214,6 +222,7 @@ class Vouchers extends Component
         }
         $v = Voucher::findOrFail($id);
         $v->update(['aktif' => ! $v->aktif]);
+        LogAksiAdmin::catat(auth()->user(), 'voucher_aktif', null, ['kode' => $v->kode, 'aktif' => (bool) $v->aktif]);
         $status = $v->status();
         $this->dispatch('toast', pesan: ! $v->aktif ? 'Voucher '.$v->kode.' dinonaktifkan.'
             : ($status === 'aktif' ? 'Voucher '.$v->kode.' diaktifkan.' : 'Voucher '.$v->kode.' dinyalakan, tetapi statusnya '.mb_strtolower(self::STATUS[$status][1]).'. Ubah kuota atau tanggal agar bisa dipakai.'), tipe: 'sukses');
@@ -237,6 +246,9 @@ class Vouchers extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        if (! $this->butuhSandi('Hapus voucher', 'hapus')) {
+            return;
+        }
         $v = $this->hapusId ? Voucher::find($this->hapusId) : null;
         $this->dialogHapus = false;
         if (! $v) {
@@ -248,6 +260,7 @@ class Vouchers extends Component
             return;
         }
         $v->delete();
+        LogAksiAdmin::catat(auth()->user(), 'voucher_hapus', null, ['kode' => $v->kode]);
         $this->dispatch('toast', pesan: 'Voucher '.$v->kode.' dihapus.', tipe: 'sukses');
     }
 

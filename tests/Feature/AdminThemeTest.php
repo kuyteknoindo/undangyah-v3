@@ -15,20 +15,22 @@ use Database\Seeders\TemaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminThemeTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     private function daftar(?User $user = null)
     {
-        return Livewire::actingAs($user ?? User::factory()->admin()->create())->test(Theme::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? User::factory()->admin()->create()))->test(Theme::class);
     }
 
     private function editor(int|string|null $sasaran = 'baru', ?User $user = null)
     {
-        return Livewire::actingAs($user ?? User::factory()->admin()->create())->test(ThemeEditor::class, ['sasaran' => $sasaran]);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? User::factory()->admin()->create()))->test(ThemeEditor::class, ['sasaran' => $sasaran]);
     }
 
     private function isi($k, array $f = [])

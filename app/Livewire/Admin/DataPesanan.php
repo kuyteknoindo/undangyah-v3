@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\AksiPesananAdmin;
+use App\Models\LogAksiAdmin;
 use App\Models\Pesanan;
 use App\Services\CsvTamu;
 use App\Services\KuerPesananAdmin;
@@ -56,7 +57,7 @@ class DataPesanan extends Component
     private function normalisasi(): void
     {
         $this->cari = mb_substr(trim($this->cari), 0, 100);
-        $this->status = in_array($this->status, KuerPesananAdmin::STATUS, true) ? $this->status : '';
+        $this->status = in_array($this->status, [...KuerPesananAdmin::STATUS, KuerPesananAdmin::TINJAU], true) ? $this->status : '';
         $this->periode = in_array($this->periode, KuerPesananAdmin::PERIODE, true) ? $this->periode : '';
         $this->urut = in_array($this->urut, KuerPesananAdmin::URUTAN, true) ? $this->urut : 'baru';
         $this->metode = mb_substr($this->metode, 0, 80);
@@ -123,7 +124,10 @@ class DataPesanan extends Component
 
     public function ekspor(): ?StreamedResponse
     {
-        $this->pastikanAdmin();
+        $admin = $this->pastikanAdmin();
+        if (! $this->butuhSandi('Ekspor data pesanan (CSV, berisi data pembeli)', 'ekspor')) {
+            return null;
+        }
         $kunci = 'pesanan-ekspor:'.auth()->id();
         if (RateLimiter::tooManyAttempts($kunci, 10)) {
             $this->dispatch('toast', pesan: 'Terlalu banyak ekspor. Coba lagi sebentar lagi.', tipe: 'galat');
@@ -145,6 +149,8 @@ class DataPesanan extends Component
                 $p->subtotal, $p->diskon, $p->voucher_kode, $p->biaya, $p->kode_unik, $p->total, $p->metode_label, $p->infoStatus()[0], $p->dibayar_at?->format('Y-m-d H:i'),
             ]),
         );
+
+        LogAksiAdmin::catat($admin, 'ekspor_pesanan', null, ['jumlah' => $baris->count(), 'status' => $this->status !== '' ? $this->status : null, 'cari' => trim($this->cari) !== '' ? trim($this->cari) : null]);
 
         return response()->streamDownload(function () use ($isi) {
             echo $isi;

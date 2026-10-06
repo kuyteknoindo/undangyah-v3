@@ -3,8 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
-/** Catatan aksi admin atas akun pengguna (peran, paket manual, tangguh, hapus, masuk sebagai). Tidak pernah memuat rahasia. */
+/**
+ * Jejak audit aksi admin: akun pengguna (peran, paket manual, tangguh, hapus, masuk sebagai) dan aksi sensitif lain
+ * (rekening, backup, ekspor, konfirmasi sandi). Memuat IP dan agen-pengguna ringkas; TIDAK PERNAH memuat kata sandi atau rahasia.
+ */
 class LogAksiAdmin extends Model
 {
     public const UPDATED_AT = null;
@@ -29,6 +33,7 @@ class LogAksiAdmin extends Model
             'aksi' => $aksi,
             'rincian' => $rincian ?: null,
             'ip' => request()?->ip(),
+            'agen' => ($ua = request()?->userAgent()) ? Str::limit(preg_replace('/[\x00-\x1F\x7F]+/', ' ', $ua) ?? '', 160, '') : null,
             'created_at' => now(),
         ]);
     }

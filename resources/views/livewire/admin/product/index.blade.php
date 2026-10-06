@@ -266,4 +266,6 @@
             <button type="button" class="btn {{ $aksiJenis === 'hapus' ? 'btn-danger-solid' : 'btn-primary' }}" wire:click="jalankanAksi" wire:loading.attr="disabled" wire:target="jalankanAksi">{{ $aksiJenis === 'hapus' ? 'Hapus paket' : 'Arsipkan paket' }}</button>
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

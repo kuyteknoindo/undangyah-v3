@@ -52,6 +52,8 @@ class Pesanan extends Model
             'dibatalkan_at' => 'datetime',
             'refund_at' => 'datetime',
             'ditunda_at' => 'datetime',
+            'perlu_ditinjau_at' => 'datetime',
+            'selesai_ditinjau_at' => 'datetime',
             'bukti_at' => 'datetime',
             'bukti_ditolak_at' => 'datetime',
         ];
@@ -112,6 +114,12 @@ class Pesanan extends Model
     public function ringkasItem(): string
     {
         return $this->item->map(fn (ItemPesanan $i) => $i->namaTampil())->implode(' + ');
+    }
+
+    /** Sudah lunas tetapi isinya tidak sepenuhnya diterapkan (mis. paket lebih rendah dari paket aktif); menunggu keputusan admin. */
+    public function perluDitinjau(): bool
+    {
+        return $this->perlu_ditinjau_at !== null;
     }
 
     public function adaPaket(): bool

@@ -13,6 +13,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
+    <x-meta-brand />
     <title>{{ $judul }} · {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -30,7 +31,7 @@
            class="fixed inset-y-0 left-0 z-[60] flex w-[276px] flex-col gap-4 overflow-y-auto overscroll-contain border-r border-line bg-white px-3 py-4 transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:shadow-none">
 
         <div class="flex items-center justify-between px-1">
-            <a href="{{ route('beranda') }}" wire:navigate aria-label="undangyah, beranda"><x-logo /></a>
+            <a href="{{ route('beranda') }}" wire:navigate title="Ke beranda"><x-logo /></a>
             <button type="button" class="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-gray-100 lg:hidden" x-on:click="buka = false" aria-label="Tutup menu">
                 <x-ikon nama="tutup" :ukuran="20" />
             </button>

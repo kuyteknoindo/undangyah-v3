@@ -19,3 +19,6 @@ Schedule::command('undangyah:pesanan-kedaluwarsa')->everyFiveMinutes()->withoutO
 // Backup otomatis: DEFAULT NONAKTIF; admin mengaktifkannya di Admin > Backup dan Restore. Frekuensi dicek saat dijalankan.
 Schedule::command('undangyah:backup --otomatis')->dailyAt('02:00')->withoutOverlapping(120)
     ->when(fn () => PengaturanBackup::jalanHariIni());
+
+// Penahanan slug lama (90 hari) yang sudah lewat dibersihkan tiap hari; pemeriksaan ketersediaan tetap benar tanpa ini.
+Schedule::command('undangyah:slug-bersih')->daily();

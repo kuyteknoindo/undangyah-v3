@@ -20,11 +20,13 @@ class HitungPesanan
 
     public const UNIK_MAKS = 999;
 
+    public function __construct(private AturanPaket $aturan) {}
+
     /**
      * @param  list<string>  $addonKode
      * @return array{
      *   item:list<array{tipe:string,kode:string,nama:string,harga:int,efek:array}>,
-     *   paket:?Paket, efektif:string, perpanjang:bool,
+     *   paket:?Paket, paket_galat:?string, efektif:string, perpanjang:bool,
      *   subtotal:int, diskon:int, voucher:?Voucher, voucher_label:?string, voucher_galat:?string,
      *   metode:?MetodePembayaran, biaya:int, kode_unik:int, total:int, tanda:string
      * }
@@ -33,9 +35,13 @@ class HitungPesanan
     {
         $item = [];
         $paket = null;
+        $paketGalat = null;
         if ($paketKode) {
             $kandidat = Paket::where('kode', $paketKode)->first();
-            if ($kandidat && $kandidat->dapatDibeli()) {
+            if ($kandidat && $kandidat->dapatDibeli() && ($bentrok = $this->aturan->bentrok($user, $kandidat->kode))) {
+                // Paket lebih rendah tidak boleh menimpa paket lebih tinggi yang masih aktif: tidak masuk item, pesan dikembalikan.
+                $paketGalat = $bentrok['pesan'];
+            } elseif ($kandidat && $kandidat->dapatDibeli()) {
                 $paket = $kandidat;
                 $item[] = [
                     'tipe' => ItemPesanan::PAKET,
@@ -95,6 +101,7 @@ class HitungPesanan
         return [
             'item' => $item,
             'paket' => $paket,
+            'paket_galat' => $paketGalat,
             'efektif' => $efektif,
             'perpanjang' => $paket !== null && $aktifSekarang === $paket->kode,
             'subtotal' => $subtotal,

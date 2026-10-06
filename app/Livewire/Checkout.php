@@ -8,6 +8,7 @@ use App\Models\AddonPengguna;
 use App\Models\MetodePembayaran;
 use App\Models\Paket;
 use App\Models\Voucher;
+use App\Services\AturanPaket;
 use App\Services\DataTagihan;
 use App\Services\HitungPesanan;
 use App\Services\Keranjang;
@@ -64,12 +65,18 @@ class Checkout extends Component
         $this->metode = MetodePembayaran::tersedia()->value('kode') ?? '';
     }
 
-    public function tambahPaket(string $kode, Keranjang $keranjang): void
+    public function tambahPaket(string $kode, Keranjang $keranjang, AturanPaket $aturan): void
     {
         $paket = Paket::where('kode', $kode)->first();
         if (! $paket || ! $paket->dapatDibeli()) {
             return;
         }
+        if ($bentrok = $aturan->bentrok(auth()->user(), $paket->kode)) {
+            $this->galat = $bentrok['pesan'];
+
+            return;
+        }
+        $this->galat = '';
         $keranjang->setPaket($paket->kode);
     }
 
@@ -168,7 +175,7 @@ class Checkout extends Component
         return $this->redirectRoute('konfirmasi-pembayaran', ['pesanan' => $pesanan->nomor], navigate: true);
     }
 
-    public function render(HitungPesanan $hitung, Keranjang $keranjang)
+    public function render(HitungPesanan $hitung, Keranjang $keranjang, AturanPaket $aturan)
     {
         $user = auth()->user();
         $k = $keranjang->ambil();
@@ -180,13 +187,17 @@ class Checkout extends Component
             'status' => $hitung->statusAddon($a, $h['efektif'], $dimiliki),
             'dipilih' => in_array($a->kode, array_column($h['item'], 'kode'), true),
         ]);
-        $paketTersedia = Paket::tampil()->get()->filter->dapatDibeli();
+        $paketTersedia = Paket::tampil()->get()->filter->dapatDibeli()->filter(fn (Paket $p) => $aturan->bentrok($user, $p->kode) === null);
+        $paketDitolak = $h['paket_galat'] !== null
+            ? ['nama' => 'Paket '.(Paket::where('kode', $k['paket'])->value('nama') ?? ucfirst((string) $k['paket'])), 'pesan' => $h['paket_galat']]
+            : null;
 
         return view('livewire.checkout', [
             'h' => $h,
             'addon' => $addon,
+            'paketDitolak' => $paketDitolak,
             'metodeDaftar' => MetodePembayaran::tersedia()->get(),
-            'paketBisaDitambah' => $paketTersedia->first(fn (Paket $p) => $h['paket'] === null && $p->kode !== 'gratis'),
+            'paketBisaDitambah' => $paketTersedia->first(fn (Paket $p) => $k['paket'] === null && $p->kode !== 'gratis'),
             'tautanBilling' => Route::has('billing') ? route('billing') : '#',
             'tautanSyarat' => Route::has('syarat') ? route('syarat') : null,
             'paketSaatIni' => $user->paketAktif(),

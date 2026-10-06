@@ -9,7 +9,7 @@ class MetaUndangan
 {
     public const DESKRIPSI_BAWAAN = 'Anda diundang. Buka undangan digital ini.';
 
-    public const GAMBAR_BAWAAN = '/undangan/og-bawaan.png';
+    public const GAMBAR_BAWAAN = '/brand/og-undangyah.png';
 
     public function __construct(private IsiUndangan $isian) {}
 

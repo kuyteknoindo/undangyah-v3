@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
+use App\Models\LogAksiAdmin;
 use App\Models\Media;
 use App\Services\KonfigStorage;
 use App\Services\MediaDitolak;
@@ -16,7 +18,7 @@ use Livewire\WithFileUploads;
 /** Admin > Media: pustaka file (foto, ornamen, audio, video, dokumen). Unggahan admin menjadi aset sistem (tanpa pemilik, tanpa kuota). */
 class PustakaMedia extends Component
 {
-    use HakAdminKatalog, WithFileUploads;
+    use HakAdminKatalog, MintaKonfirmasiSandi, WithFileUploads;
 
     private const PER_HALAMAN = 24;
 
@@ -279,8 +281,13 @@ class PustakaMedia extends Component
         if (! $this->izinTulis()) {
             return;
         }
+        // Hapus massal atau hapus paksa (file yang masih dirujuk) wajib konfirmasi sandi; satu file biasa tidak.
+        if ((count($this->hapusIds) > 1 || $this->hapusPaksa) && ! $this->butuhSandi('Hapus massal file media', 'hapus')) {
+            return;
+        }
         $this->dialogHapus = false;
         $daftar = Media::whereIn('id', $this->hapusIds)->get();
+        $paksa = $this->hapusPaksa;
         $terhapus = 0;
         $dilewati = 0;
         $penyimpan = app(PenyimpanMedia::class);
@@ -299,6 +306,9 @@ class PustakaMedia extends Component
             $this->detailId = null;
         }
 
+        if ($terhapus > 0 || $dilewati > 0) {
+            LogAksiAdmin::catat(auth()->user(), 'media_hapus', null, ['dihapus' => $terhapus, 'dilewati' => $dilewati, 'paksa' => $paksa]);
+        }
         if ($terhapus > 0) {
             $this->dispatch('toast', pesan: $terhapus === 1 ? 'File dihapus.' : $terhapus.' file dihapus.', tipe: 'sukses');
         }

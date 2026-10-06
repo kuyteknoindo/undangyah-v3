@@ -522,7 +522,7 @@ class EditorUndangan extends Component
             return;
         }
         $this->slug = trim((string) preg_replace('/[^a-z0-9-]/', '-', mb_strtolower($this->slug)), ' ');
-        if ($pesan = app(SlugUndangan::class)->galat($this->slug, $u->id)) {
+        if ($pesan = app(SlugUndangan::class)->galat($this->slug, $u->id, (int) $u->user_id)) {
             $this->galatSlug = $pesan;
 
             return;
@@ -532,6 +532,9 @@ class EditorUndangan extends Component
             $this->simpan();
         } catch (UniqueConstraintViolationException) {
             $this->galatSlug = 'Alamat ini sudah dipakai undangan lain.';
+            $u->slug = $u->getOriginal('slug');
+        } catch (ValidationException $e) {
+            $this->galatSlug = $e->errors()['slug'][0] ?? '';
             $u->slug = $u->getOriginal('slug');
         }
     }
@@ -552,7 +555,7 @@ class EditorUndangan extends Component
     {
         $this->slugTerbit = trim((string) preg_replace('/[^a-z0-9-]/', '-', mb_strtolower($this->slugTerbit)));
         $this->galatTerbit = '';
-        $this->galatSlug = app(SlugUndangan::class)->galat($this->slugTerbit, $this->undanganId) ?? '';
+        $this->galatSlug = app(SlugUndangan::class)->galat($this->slugTerbit, $this->undanganId, (int) auth()->id()) ?? '';
     }
 
     public function ulangTerbit(): void

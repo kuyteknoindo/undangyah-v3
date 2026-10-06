@@ -185,7 +185,7 @@
                                 <td>
                                     <div class="flex items-center gap-1">
                                         @if ($b->sukses())
-                                            <a href="{{ route('admin.backup.unduh', $b) }}" class="btn-icon" aria-label="Unduh {{ $b->nama }}" title="Unduh"><x-ikon nama="bagikan-unduh" :ukuran="14" /></a>
+                                            <button type="button" wire:click="unduh({{ $b->id }})" class="btn-icon" aria-label="Unduh {{ $b->nama }}" title="Unduh"><x-ikon nama="bagikan-unduh" :ukuran="14" /></button>
                                             <button type="button" class="btn-icon" wire:click="verifikasi({{ $b->id }})" wire:loading.attr="disabled" wire:target="verifikasi({{ $b->id }})" aria-label="Verifikasi {{ $b->nama }}" title="Verifikasi integritas"><x-ikon nama="backup-cek" :ukuran="14" /></button>
                                             <button type="button" class="btn-icon" wire:click="tanyaUji({{ $b->id }})" @disabled(! $kemampuan['bisa'] || ! $b->bisaDiujiPulih()) aria-label="Uji pulihkan {{ $b->nama }}" title="{{ ! $kemampuan['bisa'] ? 'Uji pulihkan dinonaktifkan (lihat penjelasan di atas)' : ($b->bisaDiujiPulih() ? 'Uji pulihkan ke database sementara' : 'Hanya untuk backup database PostgreSQL') }}"><x-ikon nama="backup-uji" :ukuran="14" /></button>
                                         @endif
@@ -243,4 +243,6 @@
             @endif
         </x-slot:footer>
     </x-dialog>
+
+    <x-admin.dialog-konfirmasi-sandi :label="$tertundaLabel" :pesan="$tertundaPesan" />
 </div>

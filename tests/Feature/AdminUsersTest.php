@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminUsersTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     private User $admin;
@@ -38,7 +40,7 @@ class AdminUsersTest extends TestCase
 
     private function halaman(?User $sebagai = null)
     {
-        return Livewire::actingAs($sebagai ?? $this->admin)->test(Users::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($sebagai ?? $this->admin))->test(Users::class);
     }
 
     // ---- akses ----

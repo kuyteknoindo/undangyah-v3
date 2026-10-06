@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body style="margin:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#262a31">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px">
     <tr><td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff;border:1px solid #e6e8ec;border-radius:16px;padding:32px">
-            <tr><td style="font-size:18px;font-weight:700;color:#1d4ed8">undangyah</td></tr>
+            <tr><td style="font-size:18px;font-weight:700;color:#1d4ed8"><a href="{{ rtrim(config('app.url'), '/') }}/" style="text-decoration:none;color:#1d4ed8"><img src="{{ rtrim(config('app.url'), '/') }}/brand/undangyah-logo-full.png" alt="undangyah.com, undangan digital" width="164" height="38" style="display:block;border:0;width:164px;height:auto;font-size:18px;font-weight:700;color:#1d4ed8"></a></td></tr>
             <tr><td style="padding-top:20px;font-size:15px;line-height:24px">
                 Halo{{ $nama !== '' ? ', '.$nama : '' }}.<br>
                 Seseorang (semoga kamu) meminta mengganti email akun undangyah menjadi <strong>{{ $emailBaru }}</strong>.

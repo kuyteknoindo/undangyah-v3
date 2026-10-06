@@ -504,9 +504,11 @@ class UndanganPublikTest extends TestCase
 
         $res = $this->buka('/raka-sinta')->assertOk()
             ->assertSee('<meta property="og:title" content="Raka &amp; Sinta">', false)
-            ->assertSee('<meta property="og:image" content="'.url('/undangan/og-bawaan.png').'">', false);
+            ->assertSee('<meta property="og:image" content="'.url('/brand/og-undangyah.png').'">', false)
+            ->assertSee('rel="apple-touch-icon"', false)
+            ->assertSee('favicon.ico', false);
         $this->assertStringNotContainsString('javascript:alert', $res->getContent());
-        $this->assertFileExists(public_path('undangan/og-bawaan.png'));
+        $this->assertFileExists(public_path('brand/og-undangyah.png'));
     }
 
     public function test_meta_foto_sampul_dipakai_bila_foto_share_kosong_dan_deskripsi_bawaan(): void

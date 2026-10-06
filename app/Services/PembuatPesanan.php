@@ -53,8 +53,13 @@ class PembuatPesanan
         if ($voucherKode !== null && $voucherKode !== '') {
             Voucher::where('kode', Voucher::normalisasi($voucherKode))->lockForUpdate()->first();
         }
+        // Paket aktif dibaca dari DB (bukan dari model di memori) karena aturan paket bergantung padanya.
+        $user = User::findOrFail($user->id);
         $h = $this->hitung->hitung($user, $paketKode, $addonKode, $voucherKode, $metodeKode, $unik);
 
+        if ($h['paket_galat'] !== null) {
+            throw new PesananGagal($h['paket_galat']);
+        }
         if ($h['item'] === []) {
             throw new PesananGagal('Keranjang kosong atau item tidak bisa dibeli.');
         }

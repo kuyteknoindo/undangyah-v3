@@ -3,10 +3,13 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
+use App\Models\LogAksiAdmin;
 use App\Models\MetodePembayaran;
 use App\Models\Pengaturan;
 use App\Models\Pesanan;
 use App\Services\DataMetodePembayaran;
+use App\Support\Samarkan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +20,7 @@ use Livewire\Component;
 class Pembayaran extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     private const MAKS_LANGKAH = 8;
 
@@ -147,6 +151,16 @@ class Pembayaran extends Component
         // Tanda contoh hanya hilang bila yang tersimpan memang rekening/tujuan nyata.
         $data['placeholder'] = app(DataMetodePembayaran::class)->terlihatContoh($tipe, $data);
 
+        // Rekening/tujuan bayar menentukan ke mana uang pembeli mengalir: membuat metode baru atau mengubah salah satu
+        // bidang ini wajib konfirmasi sandi. Biaya, kode unik, label, urutan, dan aktif tidak.
+        $lama = (array) ($metode?->data ?? []);
+        $rekeningBerubah = $metode === null || $metode->tipe !== $tipe || collect(['bank', 'nomor', 'atas', 'tujuan_label', 'tujuan_nilai', 'instruksi'])
+            ->contains(fn (string $k) => (string) ($lama[$k] ?? '') !== (string) ($data[$k] ?? ''))
+            || array_values((array) ($lama['langkah'] ?? [])) !== $data['langkah'];
+        if ($rekeningBerubah && ! $this->butuhSandi($metode ? 'Ubah rekening metode pembayaran' : 'Tambah metode pembayaran', 'simpan')) {
+            return;
+        }
+
         $atribut = [
             'label' => $this->f['label'],
             'keterangan' => $this->f['keterangan'] === '' ? null : $this->f['keterangan'],
@@ -157,10 +171,37 @@ class Pembayaran extends Component
             'aktif' => (bool) $this->f['aktif'],
             'data' => $data,
         ];
-        $metode ? $metode->update($atribut) : MetodePembayaran::create($atribut + ['kode' => $this->kodeBaru($atribut['label']), 'urutan' => (int) MetodePembayaran::max('urutan') + 1]);
+        $sebelum = $metode ? $this->ringkasRekening($metode->tipe, $lama) : null;
+        $metode ? $metode->update($atribut) : $metode = MetodePembayaran::create($atribut + ['kode' => $this->kodeBaru($atribut['label']), 'urutan' => (int) MetodePembayaran::max('urutan') + 1]);
+        if ($rekeningBerubah) {
+            LogAksiAdmin::catat(auth()->user(), $sebelum === null ? 'metode_bayar_buat' : 'ubah_rekening', null, [
+                'metode' => $atribut['label'], 'kode' => $metode->kode, 'aktif' => $atribut['aktif'],
+                'sebelum' => $sebelum, 'sesudah' => $this->ringkasRekening($tipe, $data),
+            ]);
+        }
 
         $this->dialogForm = false;
         $this->dispatch('toast', pesan: 'Metode '.$atribut['label'].' disimpan.'.($data['placeholder'] && $atribut['aktif'] ? ' Perhatian: rekening masih data contoh.' : ''), tipe: $data['placeholder'] && $atribut['aktif'] ? 'info' : 'sukses');
+    }
+
+    /**
+     * Ringkasan rekening untuk log audit; nomor disamarkan (4 digit terakhir).
+     *
+     * @param  array<string,mixed>  $d
+     * @return array<string,mixed>
+     */
+    private function ringkasRekening(string $tipe, array $d): array
+    {
+        return array_filter([
+            'tipe' => $tipe,
+            'bank' => $d['bank'] ?? null,
+            'nomor' => Samarkan::nomor($d['nomor'] ?? null),
+            'tujuan_label' => $d['tujuan_label'] ?? null,
+            'tujuan_nilai' => Samarkan::nomor($d['tujuan_nilai'] ?? null),
+            'atas' => $d['atas'] ?? null,
+            'instruksi' => isset($d['instruksi']) && $d['instruksi'] !== '' ? mb_substr((string) $d['instruksi'], 0, 80) : null,
+            'langkah' => count((array) ($d['langkah'] ?? [])),
+        ], fn ($v) => $v !== null);
     }
 
     /** Kode sistem (slug): disalin ke pesanan sebagai metode_kode dan dipakai Checkout; tidak berubah setelah dibuat. */
@@ -184,6 +225,7 @@ class Pembayaran extends Component
         }
         $m = MetodePembayaran::findOrFail($id);
         $m->update(['aktif' => ! $m->aktif]);
+        LogAksiAdmin::catat(auth()->user(), 'metode_bayar_aktif', null, ['metode' => $m->label, 'aktif' => (bool) $m->aktif]);
         $contoh = $m->aktif && app(DataMetodePembayaran::class)->masihPlaceholder($m);
         $this->dispatch('toast', pesan: $m->label.($m->aktif ? ' diaktifkan.' : ' dinonaktifkan.').($contoh ? ' Perhatian: rekening masih data contoh, ganti dengan rekening nyata.' : ''), tipe: $contoh ? 'info' : 'sukses');
     }
@@ -236,6 +278,7 @@ class Pembayaran extends Component
             return;
         }
         $m->delete();
+        LogAksiAdmin::catat(auth()->user(), 'metode_bayar_hapus', null, ['metode' => $m->label, 'kode' => $m->kode]);
         $this->dispatch('toast', pesan: 'Metode '.$m->label.' dihapus.', tipe: 'sukses');
     }
 

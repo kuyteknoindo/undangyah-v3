@@ -84,7 +84,7 @@ class PenerbitUndangan
     public function terbitkan(Undangan $u, string $slug): Undangan
     {
         $slug = trim(mb_strtolower($slug));
-        if ($pesan = $this->slug->galat($slug, $u->id)) {
+        if ($pesan = $this->slug->galat($slug, $u->id, (int) $u->user_id)) {
             throw ValidationException::withMessages(['slug' => $pesan]);
         }
         if ($blokir = $this->blokir($u)) {

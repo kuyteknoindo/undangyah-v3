@@ -14,10 +14,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Tests\Feature\Concerns\KonfirmasiSandiTes;
 use Tests\TestCase;
 
 class AdminStorageTest extends TestCase
 {
+    use KonfirmasiSandiTes;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -29,7 +31,7 @@ class AdminStorageTest extends TestCase
 
     private function halaman(?User $user = null)
     {
-        return Livewire::actingAs($user ?? User::factory()->admin()->create())->test(Penyimpanan::class);
+        return Livewire::actingAs($this->sudahKonfirmasiSandi($user ?? User::factory()->admin()->create()))->test(Penyimpanan::class);
     }
 
     private function buat(string $nama, ?User $pemilik = null, array $atribut = []): Media

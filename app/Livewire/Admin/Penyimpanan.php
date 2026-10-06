@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Admin\Concerns\HakAdminKatalog;
+use App\Livewire\Concerns\MintaKonfirmasiSandi;
 use App\Models\LogAksiAdmin;
 use App\Models\Media;
 use App\Services\KonfigStorage;
@@ -22,6 +23,7 @@ use Livewire\Component;
 class Penyimpanan extends Component
 {
     use HakAdminKatalog;
+    use MintaKonfirmasiSandi;
 
     /** File yang baru diunggah belum tentu sempat ditempatkan pengguna di undangan; jangan dibersihkan terlalu cepat. */
     public const UMUR_MIN_JAM = 24;
@@ -155,6 +157,9 @@ class Penyimpanan extends Component
     public function bersihkan(): void
     {
         if (! $this->izinTulis()) {
+            return;
+        }
+        if (! $this->butuhSandi('Bersihkan file tidak terpakai (hapus massal)', 'bersihkan')) {
             return;
         }
         $this->dialogBersih = false;
