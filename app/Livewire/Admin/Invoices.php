@@ -144,15 +144,15 @@ class Invoices extends Component
         $hitung = $kuer->hitungPerStatus($kuer->terapkanDasar(Pesanan::query(), $this->cari));
         $kpi = $kuer->kpi();
 
-        $item = $this->kueri()->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $this->halaman));
+        $item = $this->kueri()->with('item')->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $this->halaman));
         if ($item->isEmpty() && $item->total() > 0) {
             $this->halaman = $item->lastPage();
-            $item = $this->kueri()->paginate(self::PER_HALAMAN, ['*'], 'halaman', $this->halaman);
+            $item = $this->kueri()->with('item')->paginate(self::PER_HALAMAN, ['*'], 'halaman', $this->halaman);
         }
 
         $antrean = Pesanan::query()->where('status', Pesanan::MENUNGGU)->whereNotNull('bukti_path');
         $jumlahAntrean = (clone $antrean)->count();
-        $perluTinjau = $antrean->orderByRaw('case when ditunda_at is null then 0 else 1 end')->orderBy('bukti_at')->orderBy('id')->limit(10)->get();
+        $perluTinjau = $antrean->orderByRaw('case when ditunda_at is null then 0 else 1 end')->orderBy('bukti_at')->orderBy('id')->with('item')->limit(10)->get();
 
         $segera = Pesanan::query()->where('status', Pesanan::MENUNGGU)->whereBetween('kedaluwarsa_at', [now(), now()->addDay()])->count();
 

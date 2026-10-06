@@ -23,7 +23,7 @@
         </div>
     @endif
 
-    <div class="grid items-start gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)]">
         <nav aria-label="Daftar isi" class="kartu flex flex-col gap-1 p-3 lg:sticky lg:top-4">
             <div class="px-2 pb-1 text-[11px] leading-[14px] font-semibold tracking-[0.06em] text-subtle uppercase">Isi dokumen</div>
             @foreach ($bagian as $b)

@@ -229,6 +229,16 @@ class AdminPesananTest extends TestCase
 
     // ---- aksi status
 
+    public function test_aksi_lunas_tercatat_di_log_admin(): void
+    {
+        $user = User::factory()->create();
+        $p = $this->bukti($this->pesanan($user));
+
+        $this->halaman()->call('tanya', $p->id, 'lunas')->set('alasan', 'Mutasi cocok')->call('jalankan');
+
+        $this->assertDatabaseHas('log_aksi_admin', ['aksi' => 'pesanan_lunas', 'target_id' => $user->id]);
+    }
+
     public function test_tandai_lunas_mengaktifkan_paket_dan_memberi_notifikasi(): void
     {
         $user = User::factory()->create();

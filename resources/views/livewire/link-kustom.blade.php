@@ -10,7 +10,7 @@
         <div role="status" aria-busy="true" class="flex flex-col gap-5">
             <span class="sr-only">Memuat halaman…</span>
             <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-32"></span><span class="skel h-11 w-full max-w-md"></span></div>
-            <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div class="kartu flex flex-col gap-4 p-5"><span class="skel h-5 w-40"></span><span class="skel h-14 w-full"></span><span class="skel h-12 w-full"></span><span class="skel h-10 w-48"></span></div>
                 <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-40"></span><span class="skel h-3 w-full"></span><span class="skel h-3 w-5/6"></span><span class="skel h-3 w-full"></span></div>
             </div>
@@ -47,7 +47,7 @@
             </div>
         @endif
 
-        <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
             <div class="flex min-w-0 flex-col gap-5">
                 @if ($terbit)
                     <section aria-label="Ganti alamat link" class="kartu flex flex-col gap-5 p-5 sm:p-6">

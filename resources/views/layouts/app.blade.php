@@ -25,7 +25,7 @@
     <div x-show="buka" x-cloak x-transition.opacity class="fixed inset-0 z-[55] bg-gray-900/40 lg:hidden" x-on:click="buka = false" aria-hidden="true"></div>
 
     {{-- Sidebar --}}
-    <aside id="menu-utama" aria-label="Menu utama"
+    <aside id="menu-utama" aria-label="Menu utama" x-trap.noscroll="buka"
            x-bind:class="buka ? 'translate-x-0 shadow-[0_24px_60px_rgba(16,24,40,0.28)]' : 'invisible -translate-x-full lg:visible lg:translate-x-0'"
            class="fixed inset-y-0 left-0 z-[60] flex w-[276px] flex-col gap-4 overflow-y-auto overscroll-contain border-r border-line bg-white px-3 py-4 transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:shadow-none">
 

@@ -3,7 +3,7 @@
     $judulBagian = 'text-base leading-6 font-semibold text-ink';
     $labelKecil = 'text-[11px] leading-[14px] font-bold tracking-[0.08em] text-muted uppercase';
     $filters = [['semua', 'Semua'], ['terbit', 'Terbit'], ['draf', 'Draf']];
-    $kolom = 'md:grid-cols-[minmax(0,2.4fr)_100px_110px_64px_72px_64px_minmax(190px,auto)]';
+    $kolom = 'xl:grid-cols-[minmax(0,2.4fr)_100px_110px_64px_72px_64px_minmax(190px,auto)]';
 @endphp
 <div wire:init="muat" class="mx-auto flex max-w-6xl flex-col gap-6">
 
@@ -11,7 +11,7 @@
     @unless ($siap)
         <div role="status" aria-busy="true" class="flex flex-col gap-6">
             <span class="sr-only">Memuat beranda…</span>
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div class="grid gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div class="kartu flex flex-col gap-4 p-5">
                     <div class="flex items-center gap-4"><span class="skel size-14 shrink-0 rounded-2xl"></span><div class="flex flex-1 flex-col gap-2.5"><span class="skel h-3 w-28"></span><span class="skel h-5 w-3/5"></span></div></div>
                     <div class="flex gap-3"><span class="skel h-4 w-32"></span><span class="skel h-4 w-40"></span></div>
@@ -24,7 +24,7 @@
                     <div class="kartu flex flex-col gap-3 p-4"><span class="skel h-3 w-20"></span><span class="skel h-7 w-16"></span></div>
                 @endfor
             </div>
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div class="grid gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
                 <div class="kartu p-5"><span class="skel h-4 w-40"></span><span class="skel mt-4 h-36 w-full"></span></div>
                 <div class="kartu p-5"><span class="skel h-4 w-36"></span><span class="skel mt-4 h-36 w-full"></span></div>
             </div>
@@ -37,7 +37,7 @@
         </div>
     @elseif ($data === null)
         {{-- Keadaan kosong: belum punya undangan --}}
-        <section aria-labelledby="kosong-judul" class="kartu grid items-center gap-8 overflow-hidden p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section aria-labelledby="kosong-judul" class="kartu grid items-center gap-8 overflow-hidden p-6 sm:p-8 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
             <div>
                 <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand"><x-ikon nama="beranda-sorot" :ukuran="13" />Akun baru</span>
                 <h2 id="kosong-judul" class="mt-3 text-2xl leading-8 font-semibold tracking-tight text-ink">Buat undangan digital pertamamu</h2>
@@ -114,7 +114,7 @@
         @endif
 
         {{-- Undangan utama + aksi cepat --}}
-        <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div class="grid items-start gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
             <section aria-label="Undangan utama" class="kartu flex flex-col gap-4 p-5">
                 @unless ($terbit)
                     <div role="note" class="flex items-start gap-2 rounded-lg bg-[#FFFAEB] px-3 py-2 text-[13px] leading-5 text-[#B54708]">
@@ -270,7 +270,7 @@
         </section>
 
         {{-- Kunjungan + RSVP (undangan utama) --}}
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div class="grid gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <section aria-labelledby="kunj-judul" class="kartu p-5">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div><h2 id="kunj-judul" class="{{ $judulBagian }}">Kunjungan undangan</h2><div class="text-[13px] text-muted">7 hari terakhir · {{ $hero['judul'] }}</div></div>
@@ -331,7 +331,7 @@
             @endphp
 
             <div class="border-t border-line">
-                <div class="hidden gap-3 bg-[#f9fafb] px-5 py-2.5 text-xs font-medium text-muted md:grid {{ $kolom }}">
+                <div class="hidden gap-3 bg-[#f9fafb] px-5 py-2.5 text-xs font-medium text-muted xl:grid {{ $kolom }}">
                     <span>Undangan</span><span>Tanggal acara</span><span>Status</span><span class="text-right">Tamu</span><span class="text-right">Dilihat</span><span class="text-right">Hadir</span><span class="text-right">Aksi</span>
                 </div>
 
@@ -354,15 +354,15 @@
                                     <div class="text-xs text-subtle">{{ $u['jenis'] }} · {{ $u['terbit'] }}</div>
                                 </div>
                             </div>
-                            <div class="text-[13px] text-nav"><span class="mr-1.5 text-xs text-muted md:hidden">Tanggal acara</span>{{ $u['tanggal'] }}</div>
+                            <div class="text-[13px] text-nav"><span class="mr-1.5 text-xs text-muted xl:hidden">Tanggal acara</span>{{ $u['tanggal'] }}</div>
                             <div class="flex flex-col items-start gap-1">
                                 <x-pill :warna="$u['status'] === 'terbit' ? 'hijau' : 'kuning'">{{ $u['status'] === 'terbit' ? 'Terbit' : 'Draf' }}</x-pill>
                                 @if ($u['perubahan'])<span class="text-[11px] leading-4 text-[#B54708]" title="Ada perubahan di Edit Undangan yang belum diterbitkan">Belum diterbitkan ulang</span>@endif
                             </div>
-                            <div class="text-[13px] tabular-nums text-nav md:text-right"><span class="mr-1.5 text-xs text-muted md:hidden">Tamu</span>{{ $angka($u['tamu']) }}</div>
-                            <div class="text-[13px] tabular-nums text-nav md:text-right"><span class="mr-1.5 text-xs text-muted md:hidden">Dilihat</span>{{ $u['status'] === 'terbit' ? $angka($u['dilihat']) : '–' }}</div>
-                            <div class="text-[13px] tabular-nums text-nav md:text-right"><span class="mr-1.5 text-xs text-muted md:hidden">Hadir</span>{{ $u['status'] === 'terbit' ? $angka($u['hadir']) : '–' }}</div>
-                            <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
+                            <div class="text-[13px] tabular-nums text-nav xl:text-right"><span class="mr-1.5 text-xs text-muted xl:hidden">Tamu</span>{{ $angka($u['tamu']) }}</div>
+                            <div class="text-[13px] tabular-nums text-nav xl:text-right"><span class="mr-1.5 text-xs text-muted xl:hidden">Dilihat</span>{{ $u['status'] === 'terbit' ? $angka($u['dilihat']) : '–' }}</div>
+                            <div class="text-[13px] tabular-nums text-nav xl:text-right"><span class="mr-1.5 text-xs text-muted xl:hidden">Hadir</span>{{ $u['status'] === 'terbit' ? $angka($u['hadir']) : '–' }}</div>
+                            <div class="flex flex-wrap items-center gap-1.5 xl:justify-end">
                                 @if ($modeContoh)
                                     <span class="text-xs text-muted">Contoh</span>
                                 @else

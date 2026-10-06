@@ -1,4 +1,4 @@
-<div class="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
+<div class="mx-auto grid max-w-5xl gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
      x-data="{
         get kotor() {
             const a = $wire.asli || {};

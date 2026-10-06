@@ -48,7 +48,7 @@
         </section>
 
         {{-- Ringkasan --}}
-        <section aria-label="Ringkasan RSVP" class="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <section aria-label="Ringkasan RSVP" class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark p-6 text-white">
                 <div aria-hidden="true" class="absolute -top-16 -right-10 size-48 rounded-full bg-white/10"></div>
                 <div aria-hidden="true" class="absolute -right-4 -bottom-20 size-44 rounded-full bg-white/5"></div>
@@ -161,7 +161,7 @@
                         @foreach ($chips as $c)
                             <button type="button" wire:click="pilihStatus('{{ $c['nilai'] }}')" aria-pressed="{{ $status === $c['nilai'] ? 'true' : 'false' }}"
                                     class="inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium {{ $status === $c['nilai'] ? 'border-brand bg-brand-50 text-brand' : 'border-line-strong bg-white text-nav hover:bg-gray-50' }}">
-                                {{ $c['label'] }} <span class="text-xs opacity-70">{{ $angka($c['jumlah']) }}</span>
+                                {{ $c['label'] }} <span class="text-xs opacity-90">{{ $angka($c['jumlah']) }}</span>
                             </button>
                         @endforeach
                     </div>

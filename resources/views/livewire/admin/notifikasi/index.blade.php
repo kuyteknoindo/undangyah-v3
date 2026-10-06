@@ -14,7 +14,7 @@
         <div class="kartu kpi"><span class="kpi-l">Notifikasi terkirim</span><span class="kpi-v">{{ $angka($ringkasan['penerima']) }}</span><span class="hint">Jumlah dari semua siaran</span></div>
     </section>
 
-    <div class="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <section aria-labelledby="bc-h" class="kartu flex flex-col gap-4 p-5">
             <div class="flex items-start justify-between gap-3">
                 <div>

@@ -16,7 +16,7 @@
             <span class="sr-only">Memuat hadiah digital…</span>
             <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-3 w-24"></span><span class="skel h-11 w-full max-w-md"></span></div>
             <div class="skel h-12 w-full"></div>
-            <div class="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+            <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
                 <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-40"></span><span class="skel h-24 w-full"></span><span class="skel h-24 w-full"></span></div>
                 <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-32"></span><span class="skel h-20 w-full"></span></div>
             </div>

@@ -14,5 +14,5 @@
         <a href="{{ route('beranda') }}" class="btn btn-secondary"><x-ikon nama="beranda" :ukuran="16" /> Beranda</a>
         <a href="{{ route('bantuan') }}" class="btn btn-secondary">Pusat Bantuan</a>
     </div>
-    <a href="{{ route('hubungi') }}" class="mt-1 text-[13px] font-semibold text-brand hover:underline">Laporkan masalah ini</a>
+    <a href="{{ route('hubungi') }}" class="mt-1 inline-flex min-h-6 items-center text-[13px] font-semibold text-brand hover:underline">Laporkan masalah ini</a>
 </x-layouts.sederhana>

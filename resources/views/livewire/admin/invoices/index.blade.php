@@ -133,7 +133,7 @@
                             @endphp
                             <tr wire:key="invoice-{{ $p->id }}">
                                 <td>
-                                    <a href="{{ route('invoice', $p) }}" target="_blank" rel="noopener" class="font-semibold whitespace-nowrap text-brand hover:underline">{{ $p->nomor }}</a>
+                                    <a href="{{ route('invoice', $p) }}" target="_blank" rel="noopener" class="inline-flex min-h-6 items-center font-semibold whitespace-nowrap text-brand hover:underline">{{ $p->nomor }}</a>
                                     <div class="hint">{{ $p->metode_label ?? '-' }}</div>
                                 </td>
                                 <td class="max-w-[200px]"><div class="truncate font-medium text-ink">{{ $p->pembeli_nama }}</div><div class="hint truncate">{{ $p->pembeli_email }}</div></td>

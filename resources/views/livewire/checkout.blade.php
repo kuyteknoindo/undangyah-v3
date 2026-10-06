@@ -25,7 +25,7 @@
         <div role="alert" class="flex items-start gap-2 rounded-xl bg-danger-50 px-4 py-3 text-sm font-medium text-danger"><x-ikon nama="peringatan" :ukuran="18" class="mt-0.5" /> {{ $galat }}</div>
     @endif
 
-    <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_360px]">
         <div class="flex min-w-0 flex-col gap-5">
             {{-- Item pesanan --}}
             <section aria-labelledby="c-item" class="kartu flex min-w-0 flex-col gap-4 p-5">
@@ -186,7 +186,7 @@
         </div>
 
         {{-- Ringkasan --}}
-        <aside aria-labelledby="c-sum" class="kartu flex flex-col gap-4 p-5 lg:sticky lg:top-24">
+        <aside aria-labelledby="c-sum" class="kartu flex flex-col gap-4 p-5 xl:sticky xl:top-24">
             <h2 id="c-sum" class="h2">Ringkasan pesanan</h2>
             <div class="flex flex-col gap-2.5 text-sm leading-5">
                 @foreach ($baris as $b)

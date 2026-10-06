@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PengamanAkun
 {
     /** Komponen Livewire yang tidak boleh dijalankan saat "masuk sebagai" (ubah sandi/email/profil, beli paket). */
-    private const KOMPONEN_TERBLOKIR = ['akun.', 'auth.', 'checkout', 'konfirmasi-pembayaran', 'paket-billing'];
+    private const KOMPONEN_TERBLOKIR = ['akun.', 'auth.', 'checkout', 'konfirmasi-pembayaran', 'paket-billing', 'hadiah-digital', 'hubungi-layanan'];
 
     private const RUTE_BEBAS = ['impersonasi.akhiri', 'keluar'];
 
@@ -33,6 +33,13 @@ class PengamanAkun
 
         $imp = $this->impersonasi->data();
         if ($user && $imp) {
+            $pemulai = User::find($imp['admin_id']);
+            if (! $pemulai || ! $pemulai->isAdmin() || $pemulai->ditangguhkan_at) {
+                // Admin yang memulai sudah diturunkan/ditangguhkan: sesi target tidak boleh terus hidup.
+                $this->impersonasi->akhiri('admin_tidak_sah');
+
+                return $this->arahkan($request, 'Sesi "masuk sebagai" dihentikan karena akun admin pemulainya tidak lagi sah.', false);
+            }
             if ($this->impersonasi->sisaDetik() <= 0) {
                 $this->impersonasi->akhiri('kedaluwarsa');
 
@@ -105,7 +112,7 @@ class PengamanAkun
         $menit = (int) ceil($this->impersonasi->sisaDetik() / 60);
         $banner = '<style>body{padding-top:44px}#menu-utama{top:44px!important;height:calc(100vh - 44px)!important}</style>'
             .'<div id="banner-impersonasi" role="status" style="position:fixed;top:0;left:0;right:0;z-index:2147483000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;min-height:44px;padding:6px 12px;background:#B54708;color:#fff;font:600 13px/18px system-ui,sans-serif">'
-            .'<span>Masuk sebagai '.e($user->name).' ('.e($user->email).'). Sisa sekitar '.$menit.' menit. Aksi dicatat; ubah sandi/email dan pembelian dinonaktifkan.</span>'
+            .'<span>Masuk sebagai '.e($user->name).' ('.e($user->email).'). Sisa sekitar '.$menit.' menit. Mulai dan selesai dicatat; ubah sandi/email, pembelian, rekening hadiah, dan tiket dinonaktifkan.</span>'
             .'<form method="POST" action="'.e(route('impersonasi.akhiri')).'" style="margin:0"><input type="hidden" name="_token" value="'.e(csrf_token()).'">'
             .'<button type="submit" style="min-height:30px;padding:0 12px;border:0;border-radius:8px;background:#fff;color:#7A2E0E;font:700 13px system-ui,sans-serif;cursor:pointer">Kembali ke Admin</button></form></div>';
 

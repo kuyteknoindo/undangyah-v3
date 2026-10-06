@@ -445,13 +445,24 @@ class AdminUsersTest extends TestCase
         app(SesiImpersonasi::class)->mulai($this->admin, $u);
 
         $kirim = fn (string $nama) => $this->postJson(route('default-livewire.update'), ['components' => [['snapshot' => json_encode(['memo' => ['name' => $nama]]), 'updates' => [], 'calls' => []]]]);
-        foreach (['akun.ubah-sandi', 'akun.informasi-akun', 'akun.edit-profil', 'checkout', 'konfirmasi-pembayaran', 'paket-billing'] as $nama) {
+        foreach (['akun.ubah-sandi', 'akun.informasi-akun', 'akun.edit-profil', 'checkout', 'konfirmasi-pembayaran', 'paket-billing', 'hadiah-digital', 'hubungi-layanan'] as $nama) {
             $kirim($nama)->assertForbidden();
         }
         // Komponen lain tidak diblokir oleh penjaga ini (boleh gagal di tempat lain karena snapshot palsu).
         $this->assertNotSame(403, $kirim('beranda')->status());
         // Permintaan tulis di luar Livewire (mis. RSVP publik) ditolak selama sesi.
         $this->post('/apa-saja/rsvp')->assertForbidden();
+    }
+
+    public function test_sesi_masuk_sebagai_berhenti_bila_admin_pemulai_diturunkan(): void
+    {
+        $u = User::factory()->create();
+        $this->actingAs($this->admin);
+        app(SesiImpersonasi::class)->mulai($this->admin, $u);
+        $this->admin->forceFill(['role' => User::PERAN_USER])->save();
+
+        $this->get('/beranda')->assertRedirect(route('masuk'));
+        $this->assertGuest();
     }
 
     public function test_pengguna_biasa_tidak_bisa_memulai_masuk_sebagai(): void

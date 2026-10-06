@@ -101,7 +101,7 @@
                                 <td>{{ $l->kategori }}</td>
                                 <td>{{ $l->durasiTeks() }}</td>
                                 <td><x-pill :warna="$sw">{{ $sl }}</x-pill></td>
-                                <td><button type="button" wire:click="ubahStatus({{ $l->id }})" title="Klik untuk mengubah status" aria-label="Status {{ $l->judul }}: {{ $pub ? 'Publik' : 'Draf' }}. Klik untuk mengubah ke {{ $pub ? 'Draf' : 'Publik' }}"><x-pill :warna="$pub ? 'hijau' : 'kuning'">{{ $pub ? 'Publik' : 'Draf' }}</x-pill></button></td>
+                                <td><button type="button" wire:click="ubahStatus({{ $l->id }})" class="inline-flex min-h-6 items-center" title="Klik untuk mengubah status" aria-label="Status {{ $l->judul }}: {{ $pub ? 'Publik' : 'Draf' }}. Klik untuk mengubah ke {{ $pub ? 'Draf' : 'Publik' }}"><x-pill :warna="$pub ? 'hijau' : 'kuning'">{{ $pub ? 'Publik' : 'Draf' }}</x-pill></button></td>
                                 <td>
                                     <div class="flex items-center gap-1">
                                         <button type="button" @class(['btn-icon', '!border-brand !bg-brand !text-white' => $putarId === $l->id, 'text-brand' => $putarId !== $l->id]) wire:click="putar({{ $l->id }})" aria-label="{{ $putarId === $l->id ? 'Hentikan pratinjau' : 'Putar pratinjau' }} {{ $l->judul }}"><x-ikon :nama="$putarId === $l->id ? 'am-jeda' : 'am-putar'" :ukuran="14" /></button>

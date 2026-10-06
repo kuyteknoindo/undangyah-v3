@@ -89,6 +89,20 @@ class CheckoutTest extends TestCase
         }
     }
 
+    public function test_voucher_hanya_sekali_per_akun(): void
+    {
+        $user = User::factory()->create();
+        $k = $this->halaman($user)->set('vInput', 'nikah20')->call('pakaiVoucher');
+        $this->isi($k)->call('bayar');
+        $this->assertSame(1, Pesanan::count());
+
+        // Pesanan berbeda (tambah add-on) dengan voucher yang sama dari akun yang sama ditolak.
+        $addon = AddOn::where('status', 'aktif')->first();
+        $k2 = $this->halaman($user, 'premium', $addon ? [$addon->kode] : [])->set('vInput', 'nikah20')->call('pakaiVoucher');
+        $this->isi($k2)->call('bayar');
+        $this->assertSame(1, Pesanan::count(), 'voucher yang sama tidak boleh dipakai ulang oleh akun yang sama');
+    }
+
     public function test_voucher_persen_valid_memotong_harga(): void
     {
         $user = User::factory()->create();

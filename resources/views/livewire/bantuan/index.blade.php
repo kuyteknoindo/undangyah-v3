@@ -63,7 +63,7 @@ $aktif = $kategoriAktif === $kunci;
                                 <div id="jawab-{{ $a->id }}" class="flex flex-col gap-3 border-t border-line px-5 py-4">
                                     <div class="flex flex-col gap-2 text-sm leading-6 text-body">{{ \App\Support\TeksBantuan::html($a->isi) }}</div>
                                     @if ($href)
-                                        <div><a href="{{ $href }}" wire:navigate class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline">{{ $a->rute_label ?: 'Buka halaman' }} <x-ikon nama="panah-kanan" :ukuran="14" /></a></div>
+                                        <div><a href="{{ $href }}" wire:navigate class="inline-flex min-h-6 items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline">{{ $a->rute_label ?: 'Buka halaman' }} <x-ikon nama="panah-kanan" :ukuran="14" /></a></div>
                                     @endif
                                     <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3">
                                         @if ($pilihan === null)

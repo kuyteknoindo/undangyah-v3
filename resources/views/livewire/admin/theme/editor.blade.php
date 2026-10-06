@@ -42,7 +42,7 @@
     @endif
     @error('f.nama')<div class="galat" role="alert">{{ $message }}</div>@enderror
 
-    <div class="grid items-start gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
+    <div class="grid items-start gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[380px_minmax(0,1fr)]">
         <div class="flex flex-col gap-4">
             <section class="kartu flex flex-col gap-3.5 p-4" aria-labelledby="th-info">
                 <h2 id="th-info" class="h2 m-0">Info tema</h2>
@@ -95,7 +95,7 @@
                 </div>
                 <div>
                     <label for="th-base" class="lbl">Ukuran teks dasar: <b>{{ (int) $f['base'] }} px</b></label>
-                    <input id="th-base" type="range" class="w-full" min="{{ \App\Services\DokumenTema::BASE_MIN }}" max="{{ \App\Services\DokumenTema::BASE_MAX }}" step="1" wire:model.live.debounce.300ms="f.base" @disabled($arsip)>
+                    <input id="th-base" type="range" class="h-6 w-full" min="{{ \App\Services\DokumenTema::BASE_MIN }}" max="{{ \App\Services\DokumenTema::BASE_MAX }}" step="1" wire:model.live.debounce.300ms="f.base" @disabled($arsip)>
                     <div class="hint">{{ \App\Services\DokumenTema::BASE_MIN }} sampai {{ \App\Services\DokumenTema::BASE_MAX }} px. Bawaan {{ \App\Services\DokumenTema::BASE_BAWAAN }} px. Ukuran teks yang diatur sendiri oleh pengguna tidak ikut berubah.</div>
                     @error('f.base')<div class="galat mt-1" role="alert">{{ $message }}</div>@enderror
                 </div>

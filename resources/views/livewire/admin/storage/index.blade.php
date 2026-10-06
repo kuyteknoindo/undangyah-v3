@@ -28,7 +28,7 @@
         <div class="kartu kpi"><div class="kpi-l">File tidak terpakai</div><div class="kpi-v">{{ number_format((int) $takTerpakai->n, 0, ',', '.') }}</div><div class="hint">{{ (int) $takTerpakai->n ? 'Ukuran '.$ukur((int) $takTerpakai->ukuran) : 'Semua file ditandai dipakai' }}</div></div>
     </section>
 
-    <div class="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+    <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[1.4fr_1fr]">
         <section class="kartu p-5" aria-labelledby="st-komposisi">
             <div class="flex items-start justify-between gap-3">
                 <div><h2 id="st-komposisi" class="m-0 text-base font-semibold text-ink">Komposisi media</h2><div class="sub">Kuota {{ $konfig['kuota_mb'] }} MB per pengguna · aset sistem tanpa kuota</div></div>

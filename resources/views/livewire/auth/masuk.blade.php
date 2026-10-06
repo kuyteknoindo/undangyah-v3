@@ -22,7 +22,7 @@
             <label class="flex min-h-10 cursor-pointer items-center gap-2.5 text-[13px] leading-[18px] font-medium">
                 <input type="checkbox" wire:model="ingat" class="size-[18px] rounded border-line-strong accent-brand"> Ingat saya
             </label>
-            <a href="{{ route('lupa-sandi') }}" wire:navigate class="text-[13px] leading-[18px] font-semibold text-brand hover:underline">Lupa kata sandi?</a>
+            <a href="{{ route('lupa-sandi') }}" wire:navigate class="inline-flex min-h-6 items-center text-[13px] leading-[18px] font-semibold text-brand hover:underline">Lupa kata sandi?</a>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="masuk">

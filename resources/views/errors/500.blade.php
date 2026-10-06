@@ -1,0 +1,1 @@
+<x-galat-halaman kode="500" judul="Terjadi kesalahan di server" pesan="Maaf, ada masalah di pihak kami. Kami sudah mencatatnya. Coba lagi sebentar lagi; bila terus berulang, hubungi layanan." :ulang="true" />

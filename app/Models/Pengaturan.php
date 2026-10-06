@@ -27,7 +27,9 @@ class Pengaturan extends Model
     public static function ambil(string $kunci, mixed $bawaan = null): mixed
     {
         [$akar, $sisa] = array_pad(explode('.', $kunci, 2), 2, null);
-        $nilai = Cache::remember('pengaturan:'.$akar, 300, fn () => static::find($akar)?->nilai);
+        // `false` menandai kunci yang tidak ada: Cache::remember menganggap null sebagai luput, jadi kunci kosong selalu memukul DB.
+        $nilai = Cache::remember('pengaturan:'.$akar, 300, fn () => static::find($akar)?->nilai ?? false);
+        $nilai = $nilai === false ? null : $nilai;
 
         if ($nilai === null) {
             return $bawaan;

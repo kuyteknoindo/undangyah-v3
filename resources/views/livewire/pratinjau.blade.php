@@ -50,7 +50,7 @@
             </div>
         @endif
 
-        <div class="grid items-start gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)]">
             {{-- Pengaturan --}}
             <section aria-label="Pengaturan pratinjau" class="kartu flex flex-col gap-5 p-5">
                 @if ($u)

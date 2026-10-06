@@ -110,7 +110,7 @@
                                     <div class="flex min-w-0 items-center gap-2.5">
                                         <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand"><x-ikon nama="admin-product" :ukuran="16" /></span>
                                         <div class="flex min-w-0 flex-col gap-0.5">
-                                            <div class="flex items-center gap-1.5"><span class="font-semibold text-ink">{{ $r->nama }}</span>@if ($r->populer)<span class="tag text-[#b7791f]">Populer</span>@endif</div>
+                                            <div class="flex items-center gap-1.5"><span class="font-semibold text-ink">{{ $r->nama }}</span>@if ($r->populer)<span class="tag text-[#8a5a00]">Populer</span>@endif</div>
                                             <div class="flex items-center gap-1.5 text-xs text-muted"><span>{{ $r->kode }}@if ($r->sku) · {{ $r->sku }}@endif</span><x-pill :warna="$statusPill[$r->status][0]">{{ $statusPill[$r->status][1] }}</x-pill></div>
                                         </div>
                                     </div>

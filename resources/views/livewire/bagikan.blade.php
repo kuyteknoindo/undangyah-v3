@@ -3,7 +3,7 @@
         <div role="status" aria-busy="true" class="flex flex-col gap-5">
             <span class="sr-only">Memuat halaman…</span>
             <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-32"></span><span class="skel h-11 w-full max-w-md"></span></div>
-            <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div class="kartu flex flex-col gap-4 p-5"><span class="skel h-14 w-full"></span><span class="skel h-10 w-2/3"></span></div>
                 <div class="kartu flex flex-col items-center gap-3 p-5"><span class="skel size-40"></span><span class="skel h-8 w-32"></span></div>
             </div>
@@ -59,17 +59,17 @@
                     <div class="flex flex-wrap gap-2 {{ $terbit ? '' : 'pointer-events-none opacity-50' }}">
                         @php
                             $kanal = [
-                                ['WhatsApp', 'W', '#25D366', 'https://wa.me/?text='.rawurlencode($pesanUmum)],
-                                ['Telegram', 'T', '#229ED9', 'https://t.me/share/url?url='.rawurlencode($link).'&text='.rawurlencode($pesanUmum)],
+                                ['WhatsApp', 'W', '#0f7a3f', 'https://wa.me/?text='.rawurlencode($pesanUmum)],
+                                ['Telegram', 'T', '#1a7aa8', 'https://t.me/share/url?url='.rawurlencode($link).'&text='.rawurlencode($pesanUmum)],
                                 ['Email', 'E', '#666C76', 'mailto:?subject='.rawurlencode($judulSurel).'&body='.rawurlencode($pesanUmum)],
-                                ['Facebook', 'f', '#1877F2', 'https://www.facebook.com/sharer/sharer.php?u='.rawurlencode($link)],
+                                ['Facebook', 'f', '#1565d8', 'https://www.facebook.com/sharer/sharer.php?u='.rawurlencode($link)],
                                 ['X', 'X', '#262A31', 'https://twitter.com/intent/tweet?text='.rawurlencode($pesanUmum).'&url='.rawurlencode($link)],
                             ];
                         @endphp
                         @foreach ($kanal as [$nama, $inisial, $warna, $href])
                             <a href="{{ $terbit ? $href : '#' }}" target="_blank" rel="noopener noreferrer" aria-label="Bagikan lewat {{ $nama }}" @unless ($terbit) tabindex="-1" aria-disabled="true" @endunless
                                class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line-strong bg-white py-1 pr-3.5 pl-1.5 text-[13px] font-semibold text-ink hover:bg-gray-50">
-                                <span class="flex size-7 items-center justify-center rounded-lg text-[13px] font-bold text-white" style="background:{{ $warna }}">{{ $inisial }}</span>{{ $nama }}
+                                <span aria-hidden="true" class="flex size-7 items-center justify-center rounded-lg text-[13px] font-bold text-white" style="background:{{ $warna }}">{{ $inisial }}</span>{{ $nama }}
                             </a>
                         @endforeach
                         <button type="button" x-show="bisaBagikan" x-cloak aria-label="Bagikan lewat aplikasi lain" x-on:click="navigator.share({ title: @js($judulSurel), text: @js($pesanUmum), url: @js($link) }).catch(() => {})"
@@ -137,7 +137,7 @@
                         <div class="flex flex-wrap items-center gap-2 rounded-xl bg-canvas px-3 py-2 text-[13px]">
                             <span class="text-muted"><x-ikon nama="bagikan-pesan" :ukuran="15" /></span>
                             <span class="min-w-0 flex-1">Template default: <b>{{ $labelDefault }}</b></span>
-                            <button type="button" wire:click="ubahTab('pesan')" class="font-semibold text-brand">Ubah</button>
+                            <button type="button" wire:click="ubahTab('pesan')" class="inline-flex min-h-6 items-center font-semibold text-brand">Ubah</button>
                         </div>
                         <div class="flex gap-2">
                             <div class="relative min-w-0 flex-1">
@@ -181,7 +181,7 @@
                         </x-kosong>
                     @else
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-gray-50 px-4 py-2 text-[13px] sm:px-5">
-                            <label class="flex cursor-pointer items-center gap-2 font-medium"><input type="checkbox" wire:click="pilihSemuaTampil" @checked($baris->every(fn ($b) => in_array((string) $b['model']->id, array_map('strval', $sel), true))) class="size-4 rounded accent-brand">Pilih semua yang tampil</label>
+                            <label class="flex min-h-6 cursor-pointer items-center gap-2 font-medium"><input type="checkbox" wire:click="pilihSemuaTampil" @checked($baris->every(fn ($b) => in_array((string) $b['model']->id, array_map('strval', $sel), true))) class="size-4 rounded accent-brand">Pilih semua yang tampil</label>
                             <span class="flex items-center gap-3 text-muted">
                                 {{ $terpilih }} dipilih
                                 @if ($terpilih)
@@ -194,7 +194,7 @@
                             @foreach ($baris as $b)
                                 @php $t = $b['model']; @endphp
                                 <li wire:key="tamu-{{ $t->id }}" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-5">
-                                    <input type="checkbox" wire:model.live="sel" value="{{ $t->id }}" aria-label="Pilih {{ $t->nama }}" class="size-4 shrink-0 rounded accent-brand">
+                                    <input type="checkbox" wire:model.live="sel" value="{{ $t->id }}" aria-label="Pilih {{ $t->nama }}" class="size-6 shrink-0 rounded accent-brand lg:size-4">
                                     <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[13px] font-bold text-brand" aria-hidden="true">{{ mb_strtoupper(mb_substr(collect(preg_split('/\s+/u', trim($t->nama)))->take(2)->map(fn ($k) => mb_substr($k, 0, 1))->implode(''), 0, 2)) }}</span>
                                     <div class="min-w-0 flex-1 basis-40">
                                         <div class="truncate text-sm leading-5 font-semibold text-ink">{{ $t->nama }}</div>

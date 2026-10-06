@@ -128,6 +128,12 @@ class Bagikan extends Component
         $this->batas = 15;
     }
 
+    /** `batas` bisa diubah langsung dari klien; jaga di rentang wajar agar render tidak memuat seluruh tamu. */
+    public function updatedBatas(): void
+    {
+        $this->batas = max(1, min(self::MAKS_TAMU, $this->batas));
+    }
+
     public function lagi(): void
     {
         $this->batas = min(self::MAKS_TAMU, $this->batas + 15);
@@ -334,7 +340,7 @@ class Bagikan extends Component
         $sudahKirim = $this->tamuQuery()->whereNotNull('dikirim_at')->count();
         $terfilter = $this->terapkanFilter($this->tamuQuery(), $dibuka);
         $jumlahTerfilter = (clone $terfilter)->count();
-        $tamu = $terfilter->orderByDesc('id')->limit($this->batas)->get();
+        $tamu = $terfilter->orderByDesc('id')->limit(max(1, min(self::MAKS_TAMU, $this->batas)))->get();
         $rsvp = Rsvp::where('undangan_id', $undangan->id)->whereIn('tamu_id', $tamu->pluck('id'))->orderBy('id')->get()->keyBy('tamu_id');
 
         $baris = $tamu->map(function (Tamu $t) use ($undangan, $layanan, $daftarTemplate, $pengaturan, $dibuka, $rsvp, $salam) {

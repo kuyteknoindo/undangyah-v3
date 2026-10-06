@@ -38,7 +38,7 @@
         @endforeach
     </ol>
 
-    <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_320px]">
         <section class="kartu p-5 sm:p-7" aria-labelledby="judul-langkah">
             <div class="mb-5">
                 <h2 id="judul-langkah" class="text-xl leading-7 font-semibold tracking-tight text-ink">{{ $kepala[$langkah][0] }}</h2>

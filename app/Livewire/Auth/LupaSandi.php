@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use App\Models\User;
 use App\Services\LayananOtp;
+use App\Services\SesiPengguna;
 use App\Support\HasilOtp;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -149,6 +150,7 @@ class LupaSandi extends Component
                 $user->markEmailAsVerified(); // kepemilikan email sudah terbukti lewat OTP
             }
             $user->save();
+            SesiPengguna::cabutSemua($user->id);
         }
 
         session()->forget(self::SESI);

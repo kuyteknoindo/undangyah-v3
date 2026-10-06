@@ -92,6 +92,10 @@ class Notifikasi extends Model
         if ($tautan === '') {
             return null;
         }
+        // Garis miring terbalik, spasi, dan karakter kontrol dibaca peramban sebagai "//" (alihan ke situs lain).
+        if (preg_match('/[\s\x00-\x1F\x7F\\\\]/', $tautan)) {
+            return null;
+        }
         if (preg_match('#^/(?!/)#', $tautan) || preg_match('#^https?://#i', $tautan)) {
             return $tautan;
         }

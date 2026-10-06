@@ -70,6 +70,11 @@ class PembuatPesanan
         if ($sama) {
             return $sama;
         }
+        // Satu voucher hanya sekali per akun (pesanan menunggu atau lunas); tanpa ini voucher Rp 0 bisa diulang tanpa henti.
+        if ($h['voucher'] !== null && Pesanan::where('user_id', $user->id)->where('voucher_id', $h['voucher']->id)
+            ->whereIn('status', [Pesanan::MENUNGGU, Pesanan::LUNAS])->exists()) {
+            throw new PesananGagal('Voucher ini sudah pernah kamu pakai.');
+        }
         if ($menunggu->count() >= self::MAKS_MENUNGGU) {
             throw new PesananGagal('Kamu punya '.self::MAKS_MENUNGGU.' pesanan yang menunggu pembayaran. Selesaikan atau batalkan salah satunya dulu.');
         }

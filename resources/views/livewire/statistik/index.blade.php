@@ -131,7 +131,7 @@
                     <div class="rounded-lg bg-canvas px-3 py-2 text-xs leading-4 text-muted">Alur hanya menghitung tamu yang sudah ditandai terkirim. {{ $angka($tamu['dilihat'] - $a[1]) }} tamu yang membuka tanpa ditandai terkirim tidak masuk alur.</div>
                 @endif
                 @if (Route::has('rsvp'))
-                    <a href="{{ route('rsvp', ['undangan' => $undangan->id]) }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] font-semibold text-brand hover:underline">Lihat detail RSVP <x-ikon nama="panah-kanan" :ukuran="14" /></a>
+                    <a href="{{ route('rsvp', ['undangan' => $undangan->id]) }}" wire:navigate class="inline-flex min-h-6 items-center gap-1 text-[13px] font-semibold text-brand hover:underline">Lihat detail RSVP <x-ikon nama="panah-kanan" :ukuran="14" /></a>
                 @endif
             </section>
 

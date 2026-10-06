@@ -114,7 +114,7 @@
                             @endphp
                             <tr wire:key="pesanan-{{ $p->id }}">
                                 <td>
-                                    <button type="button" wire:click="buka({{ $p->id }})" class="font-semibold whitespace-nowrap text-brand hover:underline">{{ $p->nomor }}</button>
+                                    <button type="button" wire:click="buka({{ $p->id }})" class="inline-flex min-h-6 items-center font-semibold whitespace-nowrap text-brand hover:underline">{{ $p->nomor }}</button>
                                     <div class="hint">{{ T::tgl($p->created_at) }}</div>
                                 </td>
                                 <td class="max-w-[200px]"><div class="truncate font-medium text-ink">{{ $p->pembeli_nama }}</div><div class="hint truncate">{{ $p->pembeli_email }}</div></td>

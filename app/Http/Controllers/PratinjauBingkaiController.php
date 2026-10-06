@@ -18,7 +18,7 @@ class PratinjauBingkaiController extends Controller
         $u = Undangan::query()->where('user_id', $request->user()->id)->find($undangan);
         abort_unless($u, 404);
 
-        $info = PratinjauUndangan::tentukan($u, $request->query('v'));
+        $info = PratinjauUndangan::tentukan($u, is_string($request->query('v')) ? $request->query('v') : null);
         abort_if($info['mode'] === 'kosong', 404);
 
         $terbit = $info['versi'] === 'terbit';

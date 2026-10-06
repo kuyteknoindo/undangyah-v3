@@ -3,7 +3,7 @@
         <div role="status" aria-busy="true" class="flex flex-col gap-5">
             <span class="sr-only">Memuat halaman…</span>
             <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-32"></span><span class="skel h-11 w-full max-w-md"></span></div>
-            <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
                 <x-skeleton mode="kartu" :jumlah="4" />
                 <div class="kartu flex flex-col gap-3 p-5"><span class="skel h-4 w-32"></span><span class="skel h-40 w-full"></span></div>
             </div>
@@ -129,7 +129,7 @@
                         <a href="{{ $urlWa }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm"><x-ikon nama="bagikan-wa" :ukuran="14" /> Buka di WhatsApp</a>
                     @endif
                 </div>
-                @if ($tautanBagikan)<a href="{{ $tautanBagikan }}" wire:navigate class="text-[13px] font-semibold text-brand">Kirim ke tamu di Bagikan Undangan</a>@endif
+                @if ($tautanBagikan)<a href="{{ $tautanBagikan }}" wire:navigate class="inline-flex min-h-6 items-center text-[13px] font-semibold text-brand">Kirim ke tamu di Bagikan Undangan</a>@endif
             </aside>
         </div>
 

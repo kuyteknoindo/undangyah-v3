@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use App\Models\User;
 use App\Services\LayananOtp;
+use App\Services\SesiPengguna;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
@@ -67,6 +68,8 @@ class Daftar extends Component
             // Akun lama yang belum pernah terverifikasi diambil alih pendaftar baru dengan email yang sama.
             $user->fill($data)->setRememberToken(null);
             $user->save();
+            // Penyerang yang lebih dulu mendaftar dengan email ini masih memegang sesi masuk; cabut agar tak ikut terbawa setelah verifikasi.
+            SesiPengguna::cabutSemua($user->id);
         } else {
             $user = User::create($data + ['email' => $this->email]);
         }

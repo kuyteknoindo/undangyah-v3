@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Tema;
 use App\Models\Undangan;
+use App\Models\User;
 use App\Services\KuotaUndangan;
 use App\Services\SlugUndangan;
 use App\Support\SkemaUndangan;
@@ -204,23 +205,37 @@ class BuatUndangan extends Component
         }
 
         try {
-            $undangan = DB::transaction(fn () => Undangan::create([
-                'user_id' => $user->id,
-                'tema_id' => $tema->id,
-                'judul' => trim($this->judul),
-                'jenis' => 'Pernikahan',
-                'slug' => $this->slug,
-                'status' => Undangan::DRAF,
-                'isi' => $this->isiAwal(),
-                'bagian' => ['urutan' => SkemaUndangan::urutanAwal(), 'sembunyi' => []],
-                'langkah' => ['tema' => true, 'data' => false, 'tamu' => false, 'terbit' => false],
-                'tanggal_acara' => $this->tanggal,
-                'lokasi_ringkas' => trim($this->lokasi) ?: null,
-                'draf_disimpan_at' => now(),
-            ]));
+            $undangan = DB::transaction(function () use ($user, $kuota, $tema) {
+                // Kunci baris pengguna agar permintaan serentak tidak sama-sama lolos cek kuota.
+                User::query()->whereKey($user->id)->lockForUpdate()->first();
+                if ($kuota->penuh($user)) {
+                    return null;
+                }
+
+                return Undangan::create([
+                    'user_id' => $user->id,
+                    'tema_id' => $tema->id,
+                    'judul' => trim($this->judul),
+                    'jenis' => 'Pernikahan',
+                    'slug' => $this->slug,
+                    'status' => Undangan::DRAF,
+                    'isi' => $this->isiAwal(),
+                    'bagian' => ['urutan' => SkemaUndangan::urutanAwal(), 'sembunyi' => []],
+                    'langkah' => ['tema' => true, 'data' => false, 'tamu' => false, 'terbit' => false],
+                    'tanggal_acara' => $this->tanggal,
+                    'lokasi_ringkas' => trim($this->lokasi) ?: null,
+                    'draf_disimpan_at' => now(),
+                ]);
+            });
         } catch (UniqueConstraintViolationException) {
             $this->langkah = 2;
             $this->addError('slug', 'Alamat ini sudah dipakai undangan lain.');
+
+            return;
+        }
+
+        if ($undangan === null) {
+            $this->galatUmum = 'Kuota undangan paketmu sudah habis. Upgrade paket untuk membuat undangan baru.';
 
             return;
         }

@@ -87,7 +87,7 @@
                                         <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white" style="background: {{ $u->warnaAvatar() }}">{{ $u->inisial() }}</span>
                                         <div class="min-w-0">
                                             <div class="flex flex-wrap items-center gap-1.5">
-                                                <button type="button" wire:click="bukaDetail({{ $u->id }})" class="max-w-[220px] truncate text-left font-semibold text-ink hover:text-brand">{{ $u->name }}</button>
+                                                <button type="button" wire:click="bukaDetail({{ $u->id }})" class="min-h-6 max-w-[220px] truncate text-left font-semibold text-ink hover:text-brand">{{ $u->name }}</button>
                                                 @if ($diri)<span class="tag">Kamu</span>@endif
                                                 @if ($u->isAdmin())<span class="tag" style="background:#EEF3FE;color:#1D4ED8">Admin</span>@endif
                                             </div>

@@ -19,7 +19,7 @@
         <div class="hint">{{ $adaTersimpan && $diubahAt ? 'Terakhir disimpan '.$diubahAt->locale('id')->translatedFormat('j M Y, H.i') : 'Memakai nilai bawaan' }}</div>
     </section>
 
-    <div class="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+    <div class="grid gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div class="flex flex-col gap-5">
             <section aria-labelledby="kd-h" class="kartu flex flex-col gap-5 p-5">
                 <div>

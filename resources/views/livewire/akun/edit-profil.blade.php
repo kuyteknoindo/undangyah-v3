@@ -2,7 +2,7 @@
     use App\Support\WarnaAvatar;
     $peta = collect(WarnaAvatar::DAFTAR)->map(fn ($w) => $w[1]);
 @endphp
-<div class="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start"
+<div class="mx-auto grid max-w-5xl gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start"
      x-data="{
         warna: @js($peta),
         kendala: '',
@@ -102,7 +102,7 @@
         </section>
 
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <a href="{{ route('akun.informasi') }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] leading-5 font-semibold text-brand hover:underline">Ubah email atau nomor WhatsApp <x-ikon nama="panah-kanan" :ukuran="16" /></a>
+            <a href="{{ route('akun.informasi') }}" wire:navigate class="inline-flex min-h-6 items-center gap-1 text-[13px] leading-5 font-semibold text-brand hover:underline">Ubah email atau nomor WhatsApp <x-ikon nama="panah-kanan" :ukuran="16" /></a>
             <div class="flex items-center gap-2">
                 <span x-show="kotor" x-cloak class="mr-1 inline-flex items-center gap-1.5 text-xs font-medium text-warning"><span class="size-1.5 rounded-full bg-warning"></span> Belum disimpan</span>
                 <button type="button" class="btn btn-secondary" x-show="kotor" x-cloak wire:click="batalkan">Batalkan</button>

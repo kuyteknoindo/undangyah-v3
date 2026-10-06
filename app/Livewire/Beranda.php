@@ -164,7 +164,10 @@ class Beranda extends Component
     private function muatNyata(int $userId): ?array
     {
         /** @var Collection<int,Undangan> $semua */
+        // Kolom JSON besar (terbitan, bagian, pengaturan, langkah) tidak dipakai Beranda dan ikut terbaca ulang di setiap
+        // aksi Livewire; `isi` hanya dibaca untuk undangan utama (lihat `$langkah`).
         $semua = Undangan::query()
+            ->select(['id', 'user_id', 'tema_id', 'judul', 'jenis', 'slug', 'status', 'diterbitkan_at', 'ada_perubahan', 'tanggal_acara', 'lokasi_ringkas', 'created_at', 'updated_at'])
             ->where('user_id', $userId)
             ->withCount(['tamu', 'tayangan', 'rsvp as hadir_count' => fn ($q) => $q->where('status', Rsvp::HADIR)])
             ->latest('updated_at')->latest('id')
@@ -214,7 +217,7 @@ class Beranda extends Component
 
         $langkah = [
             ['label' => 'Pilih tema', 'hint' => 'Tema dipilih di Edit Undangan', 'ok' => $utama->tema_id !== null],
-            ['label' => 'Isi data undangan', 'hint' => 'Nama mempelai, tanggal, lokasi', 'ok' => ! empty($utama->isi) && $utama->tanggal_acara !== null],
+            ['label' => 'Isi data undangan', 'hint' => 'Nama mempelai, tanggal, lokasi', 'ok' => $utama->tanggal_acara !== null && $this->adaIsi($utama->id)],
             ['label' => 'Tambah daftar tamu', 'hint' => 'Supaya tiap tamu punya tautan sendiri', 'ok' => $tamu > 0],
             ['label' => 'Terbitkan undangan', 'hint' => 'Tautan siap dibagikan', 'ok' => $utama->sudahTerbit()],
         ];
@@ -250,6 +253,11 @@ class Beranda extends Component
             'ucapan' => Ucapan::query()->where('undangan_id', $utama->id)->latest()->latest('id')->limit(2)->get()
                 ->map(fn ($u) => ['nama' => $u->nama, 'waktu' => $this->waktuRelatif($u->created_at), 'pesan' => $u->pesan])->all(),
         ];
+    }
+
+    private function adaIsi(int $undanganId): bool
+    {
+        return ! empty(Undangan::query()->whereKey($undanganId)->value('isi'));
     }
 
     /**

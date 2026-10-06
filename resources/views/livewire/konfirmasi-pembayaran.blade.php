@@ -20,7 +20,7 @@
             </x-kosong>
         </section>
     @else
-        <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div class="grid items-start gap-5 grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_340px]">
             <div class="flex min-w-0 flex-col gap-5">
                 {{-- Status --}}
                 <section role="status" class="kartu flex flex-wrap items-center gap-4 p-5">
@@ -142,7 +142,7 @@
                 </section>
             </div>
 
-            <aside aria-labelledby="k-rin" class="kartu flex flex-col gap-4 p-5 lg:sticky lg:top-24">
+            <aside aria-labelledby="k-rin" class="kartu flex flex-col gap-4 p-5 xl:sticky xl:top-24">
                 <div class="flex items-center justify-between gap-2">
                     <h2 id="k-rin" class="h2">Rincian pesanan</h2>
                     @php [$labelS, $warnaS] = $pesanan->infoStatus(); @endphp

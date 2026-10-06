@@ -385,10 +385,19 @@ class RsvpTamu extends Component
             $tamu->update($data);
             $pesan = 'Data tamu diperbarui.';
         } else {
-            if (($sisa = app(KuotaTamu::class)->sisa($undangan)) !== null && $sisa < 1) {
+            $penuh = DB::transaction(function () use ($undangan, $data) {
+                // Kunci baris undangan agar permintaan serentak tidak sama-sama lolos cek kuota.
+                Undangan::query()->whereKey($undangan->id)->lockForUpdate()->first();
+                if (($sisa = app(KuotaTamu::class)->sisa($undangan)) !== null && $sisa < 1) {
+                    return true;
+                }
+                $undangan->tamu()->create($data);
+
+                return false;
+            });
+            if ($penuh) {
                 throw ValidationException::withMessages(['nama' => 'Kuota tamu paketmu untuk undangan ini sudah penuh.']);
             }
-            $undangan->tamu()->create($data);
             $pesan = 'Tamu ditambahkan.';
         }
 
@@ -582,6 +591,7 @@ class RsvpTamu extends Component
         $dilewati = 0;
         $terlewatKuota = 0;
         DB::transaction(function () use ($undangan, &$dibuat, &$dilewati, &$terlewatKuota) {
+            Undangan::query()->whereKey($undangan->id)->lockForUpdate()->first();
             $ada = $undangan->tamu()->lockForUpdate()->get(['nama', 'hp'])->mapWithKeys(fn ($t) => [CsvTamu::kunci($t->nama, $t->hp) => true])->all();
             $sisa = app(KuotaTamu::class)->sisa($undangan);
             foreach ($this->impor as $baris) {

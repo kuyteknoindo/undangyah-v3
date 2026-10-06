@@ -1,4 +1,4 @@
-<div class="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start" x-data="{ get p() { return $wire.sandiBaru || ''; } }">
+<div class="mx-auto grid max-w-5xl gap-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start" x-data="{ get p() { return $wire.sandiBaru || ''; } }">
     <section aria-label="Kata sandi" class="kartu flex flex-col gap-4 p-5 sm:p-6">
         <div>
             <h2 class="h2">Ganti kata sandi</h2>
