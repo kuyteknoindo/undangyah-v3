@@ -11,7 +11,6 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -226,17 +225,9 @@ class BuatUndangan extends Component
             return;
         }
 
-        foreach (['editor', 'undangan.edit'] as $nama) {
-            if ($rute = Route::getRoutes()->getByName($nama)) {
-                $parameter = $rute->parameterNames()[0] ?? null;
+        session()->flash('toast', ['pesan' => 'Undangan "'.$undangan->judul.'" dibuat sebagai draf. Lengkapi isinya di sini.', 'tipe' => 'sukses']);
 
-                return $this->redirectRoute($nama, $parameter ? [$parameter => $undangan->id] : [], navigate: true);
-            }
-        }
-
-        session()->flash('toast', ['pesan' => 'Undangan "'.$undangan->judul.'" dibuat sebagai draf.', 'tipe' => 'sukses']);
-
-        return $this->redirectRoute('beranda', navigate: true);
+        return $this->redirectRoute('edit-undangan', ['undangan' => $undangan->id], navigate: true);
     }
 
     /** Isian awal dari skema, ditimpa dengan data yang diisi pengguna. */

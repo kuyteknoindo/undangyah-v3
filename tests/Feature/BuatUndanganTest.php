@@ -9,7 +9,6 @@ use App\Models\Undangan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -51,7 +50,7 @@ class BuatUndanganTest extends TestCase
             ->assertSee('Acara apa yang akan kamu rayakan?');
     }
 
-    public function test_alur_utama_membuat_undangan_draf_dan_ke_beranda_bila_editor_belum_ada(): void
+    public function test_alur_utama_membuat_undangan_draf_dan_ke_editor(): void
     {
         $user = User::factory()->create();
         $tema = Tema::factory()->create(['nama' => 'Biru']);
@@ -62,7 +61,7 @@ class BuatUndanganTest extends TestCase
             ->assertSet('slug', 'raka-sinta')
             ->call('lanjut')->assertHasNoErrors()->assertSet('langkah', 3)
             ->call('buat')
-            ->assertRedirect(route('beranda'));
+            ->assertRedirect(route('edit-undangan', ['undangan' => Undangan::firstOrFail()->id]));
 
         $u = Undangan::firstOrFail();
         $this->assertSame($user->id, $u->user_id);
@@ -81,19 +80,6 @@ class BuatUndanganTest extends TestCase
         $this->assertTrue($u->langkah['tema']);
         $this->assertFalse($u->langkah['terbit']);
         $this->assertContains('sampul', $u->bagian['urutan']);
-    }
-
-    public function test_diarahkan_ke_editor_bila_rutenya_ada(): void
-    {
-        Route::middleware('web')->get('/uji-editor/{undangan}', fn () => 'ok')->name('editor');
-        app('router')->getRoutes()->refreshNameLookups();
-
-        $user = User::factory()->create();
-        Tema::factory()->create();
-        $k = Livewire::actingAs($user)->test(BuatUndangan::class)->call('lanjut');
-        $this->isiLangkahDua($k)->call('lanjut')->call('buat');
-
-        $k->assertRedirect('/uji-editor/'.Undangan::firstOrFail()->id);
     }
 
     public function test_validasi_langkah_dua_gagal(): void

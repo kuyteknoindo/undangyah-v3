@@ -8,7 +8,7 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 | 0 Fondasi | kerangka, layout, komponen dasar, peran, seeder admin, 404/offline/pemeliharaan | SELESAI (tag fase-0) |
 | 1 Akun | daftar/masuk/lupa sandi/OTP, profil, edit profil, informasi akun, ubah sandi, notifikasi | SELESAI (tag fase-1) |
 | 2 Data inti + Beranda | tabel inti, Beranda, wizard buat undangan | SELESAI (tag fase-2) |
-| 3 Editor undangan | editor, terbit, slug, pratinjau, template | belum |
+| 3 Editor undangan | editor, terbit, slug, pratinjau, template | SELESAI (tag fase-3) |
 | 4 Undangan publik | `/{slug}`, RSVP, ucapan, OG | belum |
 | 5 Tamu dan pembagian | tamu, QR, pesan, buku tamu, statistik, hadiah | belum |
 | 6 Paket dan pembayaran | paket, checkout, transfer manual | belum |
@@ -51,3 +51,9 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 - Keputusan kecil: hitung mundur Beranda memakai 09:00 (belum ada kolom jam); label status "Terbit" mengikuti DB; tanggal acara wajib >= hari ini; slug maks 60 (mengikuti `SlugUndangan`); layar "berhasil dibuat" tidak dibuat (langsung redirect); `bagian` = `{urutan, sembunyi}` (editor Fase 3 menyesuaikan di `BuatUndangan::buat()`); kuota/kunci tema aktif hanya bila `Pengaturan paket.aktif` benar, kolom paket pengguna menunggu Fase 6.
 - Catatan lintas fase: Fase 3 membaca param query `undangan` di rute `edit-undangan` dan menamai rute editor `editor`/`undangan.edit` (wizard redirect ke sana bila ada). Fase 4 butuh rute publik `/{slug}` untuk "Lihat seperti tamu". QR dialog Bagikan menunggu Fase 5. Beranda belum memakai `KuotaUndangan` (Fase 6).
 - QA: server dev sering sangat sibuk (proses lain di mesin); skrip QA jalan sebagai root, `waitUntil:'load'`.
+
+### Fase 3 (selesai 2026-10-06)
+- Jadi: editor `/edit-undangan/{undangan?}` (layout penuh `layouts/editor`, 18 bagian + urut/sembunyi, bidang per jenis, daftar berulang, tema, pengaturan, simpan otomatis, kanvas klik-untuk-pilih, terbit/terbitkan ulang/jadikan draf via `PenerbitUndangan`); `RenderUndangan` (kontrak `html()`/`untukUndangan()`, mode edit `data-kunci`, titik sambung Fase 4 `data-uy-bagian`/`data-uy-aksi`); Pratinjau `/pratinjau/{undangan?}` (bingkai iframe sandbox + CSP); Template Desain `/template`; Link Kustom `/link-kustom/{undangan?}`; `RingkasanAkun::tautanUndangan()` terisi.
+- Keputusan kecil: `terbitan` = `{judul, slug, isi, bagian, pengaturan, tema, tanda, diterbitkan_at}`; `ada_perubahan` dari tanda tangan isi+bagian+tema+pengaturan+judul; `bagian.sembunyi` = daftar id; struktur isi ekstra `_foto/_galeri/_gaya/_latarTetap/_cincin/_sembunyi` dibaca renderer; riwayat slug di `pengaturan['riwayat_slug']` (maks 20); draf tidak bisa ganti slug lewat Link Kustom; slug 3-60 (bukan 3-40); link terbit diganti lewat dialog Terbitkan ulang atau Link Kustom; tombol "Buka di tab baru" pratinjau membuka bingkai (arahkan ke `/{slug}` setelah Fase 4).
+- Tertunda: foto/pemilih gambar/crop/latar tetap (menunggu Media Fase 8), gaya teks per bidang + urungkan/ulangi, QR (Fase 5), rute publik `/{slug}` (Fase 4), pemutar musik (Fase 4/8), dokumen tema Theme Creator di renderer, mode demo Link Kustom.
+- QA ganti-link 390 px belum diuji (slug sudah dipakai di putaran 1440); langkah lain tanpa galat JS.

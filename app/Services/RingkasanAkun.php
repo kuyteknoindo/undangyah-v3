@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Undangan;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -28,7 +29,13 @@ class RingkasanAkun
     /** Tautan undangan yang sedang dipakai (untuk subjudul menu Link Kustom); null bila belum ada. */
     public function tautanUndangan(User $user): ?string
     {
-        return null;
+        $slug = Undangan::where('user_id', $user->id)
+            ->where('status', 'terbit')
+            ->whereNotNull('slug')
+            ->latest('diterbitkan_at')
+            ->value('slug');
+
+        return $slug ? parse_url(url('/'), PHP_URL_HOST).'/'.$slug : null;
     }
 
     public function jumlahTemplatePesan(User $user): int
