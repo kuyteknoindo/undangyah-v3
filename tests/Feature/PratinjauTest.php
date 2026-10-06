@@ -84,6 +84,19 @@ class PratinjauTest extends TestCase
         $this->actingAs($lain)->get('/pratinjau/bingkai/'.$milikLain->id)->assertOk();
     }
 
+    public function test_buka_di_tab_baru_versi_terbit_mengarah_ke_alamat_publik_draf_tetap_bingkai(): void
+    {
+        $user = User::factory()->create();
+        $u = $this->terbit($user, ['slug' => 'pasangan-bahagia']);
+
+        $this->actingAs($user)->get('/pratinjau/'.$u->id)
+            ->assertSee('href="'.route('undangan.publik', 'pasangan-bahagia').'" target="_blank"', false);
+
+        $draf = $this->draf($user);
+        $this->actingAs($user)->get('/pratinjau/'.$draf->id)
+            ->assertSee('/pratinjau/bingkai/'.$draf->id, false)->assertSee('data-tab-baru', false);
+    }
+
     public function test_tanpa_parameter_tidak_pernah_memilih_undangan_orang_lain(): void
     {
         $pemilik = User::factory()->create();

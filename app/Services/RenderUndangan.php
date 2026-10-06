@@ -26,8 +26,8 @@ use Illuminate\Support\Carbon;
  *   _sembunyi[kunci]  bidang yang disembunyikan (truthy)
  *   _latarTetap       {on, src, oc, oo, op, blur} latar tetap gambar (video/slideshow belum didukung)
  *
- * Opsi: edit(bool), lebar (px atau satuan CSS), tamu {nama, alamat, kode} (menampilkan bagian "tamu"),
- *       ucapan list<{nama, pesan, waktu?}>.
+ * Opsi: edit(bool), lebar (px atau satuan CSS), tamu {nama, alamat, kode} (menampilkan bagian "tamu" dan nama di sampul),
+ *       tanpaQr (bool, menyembunyikan bagian "tamu" selama QR sungguhan belum ada), ucapan list<{nama, pesan, waktu?}>.
  */
 class RenderUndangan
 {
@@ -227,7 +227,7 @@ class RenderUndangan
             ? '<div class="uy-cincin" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>'
             : '';
         $h .= $this->foto('cover', 'cover');
-        $h .= $this->teks('sapaan').$this->teks('tagline').$this->teks('priaP');
+        $h .= $this->teks('sapaan').$this->namaTamuSampul().$this->teks('tagline').$this->teks('priaP');
         if ($this->v('priaP') !== '' || $this->v('wanitaP') !== '' || $this->edit) {
             $h .= '<span class="uy-amp" aria-hidden="true" style="color:var(--uy-ona)">&amp;</span>';
         }
@@ -236,6 +236,17 @@ class RenderUndangan
         $h .= $this->edit ? '' : $this->teks('bukaHint', 'div', 'uy-kecil', '', ['c' => 'onA', 'ta' => 'center', 'fs' => 12]);
 
         return $h;
+    }
+
+    /** Nama tamu (dari tautan pribadi) di bawah sapaan sampul; hanya di halaman tamu. */
+    private function namaTamuSampul(): string
+    {
+        $nama = $this->edit ? '' : trim((string) ($this->opsi['tamu']['nama'] ?? ''));
+        if ($nama === '') {
+            return '';
+        }
+
+        return '<div class="uy-t uy-tamu-sampul" style="font-family:'.$this->hf.';font-size:22px;line-height:28px;font-weight:700;text-align:center;color:var(--uy-ona)">'.e($nama).'</div>';
     }
 
     private function bQuotes(): string
@@ -382,7 +393,8 @@ class RenderUndangan
             .($artis !== '' ? '<div class="uy-musik-meta">'.e($artis).'</div>' : '');
         if (! $this->edit) {
             $label = $this->v('musLabelOff') !== '' ? $this->v('musLabelOff') : 'Play';
-            $kartu .= '<button type="button" class="uy-tombol-kecil" data-uy-aksi="musik">'.e($label).'</button>';
+            $labelOn = $this->v('musLabelOn') !== '' ? $this->v('musLabelOn') : 'Pause';
+            $kartu .= '<button type="button" class="uy-tombol-kecil" data-uy-aksi="musik" data-label="'.e($label).'" data-label-on="'.e($labelOn).'">'.e($label).'</button>';
         } elseif ($yt !== null) {
             $kartu .= '<span class="uy-chip uy-biru" data-kunci="musLink">'.e($this->pendekUrl($yt)).'</span>';
         }
@@ -602,18 +614,21 @@ class RenderUndangan
             $ucapan = $this->teks('wsKosong', 'div', '', '', ['ta' => 'center', 'c' => 'mut', 'fs' => 13]);
         }
 
+        // Di halaman tamu kartu ini membuka lembar isian (skrip publik); beri peran tombol agar bisa dipakai papan ketik.
+        $tombolLembar = $this->edit ? '' : ' role="button" tabindex="0"';
+
         return $this->teks('rsTitle').$this->teks('rsNote')
-            .'<div class="uy-kartu uy-timbul uy-form" data-uy-bagian="rsvp">'.$form.'</div>'
+            .'<div class="uy-kartu uy-timbul uy-form" data-uy-bagian="rsvp"'.$tombolLembar.'>'.$form.'</div>'
             .'<div class="uy-jarak"></div>'
             .$this->teks('wsTitle').$this->teks('wsNote')
-            .'<div class="uy-kartu uy-timbul uy-form" data-uy-bagian="ucapan"><span class="uy-fi">'.e($this->v('rsPhPesan')).'</span><span class="uy-tombol uy-tombol-pil">'.e($this->v('wsBtn') !== '' ? $this->v('wsBtn') : 'Kirim').'</span></div>'
+            .'<div class="uy-kartu uy-timbul uy-form" data-uy-bagian="ucapan"'.$tombolLembar.'><span class="uy-fi">'.e($this->v('rsPhPesan')).'</span><span class="uy-tombol uy-tombol-pil">'.e($this->v('wsBtn') !== '' ? $this->v('wsBtn') : 'Kirim').'</span></div>'
             .($ucapan !== '' ? '<div class="uy-ucapan-daftar">'.$ucapan.'</div>' : '');
     }
 
     private function bTamu(): string
     {
         $tamu = $this->opsi['tamu'] ?? null;
-        if (! $this->edit && ! is_array($tamu)) {
+        if (! $this->edit && (! is_array($tamu) || ! empty($this->opsi['tanpaQr']))) {
             return '';
         }
         $tamu = is_array($tamu) ? $tamu : [];

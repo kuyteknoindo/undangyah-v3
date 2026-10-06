@@ -9,7 +9,7 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 | 1 Akun | daftar/masuk/lupa sandi/OTP, profil, edit profil, informasi akun, ubah sandi, notifikasi | SELESAI (tag fase-1) |
 | 2 Data inti + Beranda | tabel inti, Beranda, wizard buat undangan | SELESAI (tag fase-2) |
 | 3 Editor undangan | editor, terbit, slug, pratinjau, template | SELESAI (tag fase-3) |
-| 4 Undangan publik | `/{slug}`, RSVP, ucapan, OG | belum |
+| 4 Undangan publik | `/{slug}`, RSVP, ucapan, OG | SELESAI (tag fase-4) |
 | 5 Tamu dan pembagian | tamu, QR, pesan, buku tamu, statistik, hadiah | belum |
 | 6 Paket dan pembayaran | paket, checkout, transfer manual | belum |
 | 7 Admin penjualan/pengguna | produk, add-on, voucher, pesanan, invoice, metode bayar, users, notifikasi, OTP | belum |
@@ -57,3 +57,8 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 - Keputusan kecil: `terbitan` = `{judul, slug, isi, bagian, pengaturan, tema, tanda, diterbitkan_at}`; `ada_perubahan` dari tanda tangan isi+bagian+tema+pengaturan+judul; `bagian.sembunyi` = daftar id; struktur isi ekstra `_foto/_galeri/_gaya/_latarTetap/_cincin/_sembunyi` dibaca renderer; riwayat slug di `pengaturan['riwayat_slug']` (maks 20); draf tidak bisa ganti slug lewat Link Kustom; slug 3-60 (bukan 3-40); link terbit diganti lewat dialog Terbitkan ulang atau Link Kustom; tombol "Buka di tab baru" pratinjau membuka bingkai (arahkan ke `/{slug}` setelah Fase 4).
 - Tertunda: foto/pemilih gambar/crop/latar tetap (menunggu Media Fase 8), gaya teks per bidang + urungkan/ulangi, QR (Fase 5), rute publik `/{slug}` (Fase 4), pemutar musik (Fase 4/8), dokumen tema Theme Creator di renderer, mode demo Link Kustom.
 - QA ganti-link 390 px belum diuji (slug sudah dipakai di putaran 1440); langkah lain tanpa galat JS.
+
+### Fase 4 (selesai 2026-10-06)
+- Jadi: `routes/publik.php` (`/{slug}` tangkap-semua bernama `undangan.publik`, `/{slug}/ucapan` GET/POST, `/{slug}/rsvp` POST), `UndanganPublikController`, `MetaUndangan` (SEO/OG), `CatatTayangan`, view `publik/undangan` (dokumen sendiri, kolom 480 px), aset statis `public/undangan/tamu.{js,css}` + `og-bawaan.png` (tanpa Vite). Gerbang buka, musik, hitung mundur, salin, lembar RSVP/ucapan, "muat ucapan lainnya".
+- Keputusan kecil: isi hanya dari `terbitan` (terbit tanpa `terbitan.isi` = 404); pemilik login di slug draf diarahkan ke pratinjau; `robots` `noindex, nofollow` (desain tak menyatakan boleh diindeks); `?to=` kode tamu (10 karakter) dicocokkan, teks lain jadi nama sapaan (maks 60, di-escape); RSVP anonim maks 20 jiwa, tamu terdaftar maks `tamu.jumlah`, "tidak hadir" disimpan jumlah 0; satu baris RSVP per `tamu_id`; pesan RSVP ikut tampil sebagai ucapan; rate limit per IP(HMAC)+undangan 10 menit: 5 RSVP, 3 ucapan, 30 tulis umum, baca ucapan 60/menit; tayangan dedupe 30 menit via cache HMAC(IP|UA), IP tidak disimpan, bot dan pemilik login diabaikan; honeypot `situs_web`; header `no-cache, private`, `nosniff`, Referrer-Policy, Permissions-Policy, CSP ketat (skrip 'self' + beacon Cloudflare); bagian "tamu/QR" disembunyikan di publik (`tanpaQr`) sampai QR sungguhan Fase 5.
+- Tertunda: moderasi/penutupan/sematan ucapan (tabel `ucapan` belum punya kolom; Fase 5 Buku Tamu), musik YouTube (`musLink`, hanya tautan), latar tetap video/slideshow, `rsLabelWa` tidak dikirim, tes CSRF (dinonaktifkan di lingkungan tes; ditangani 419 ramah di JS).

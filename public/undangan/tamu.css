@@ -1,0 +1,68 @@
+/* Halaman tamu (/{slug}). Gaya isi undangan ada di renderer (.uy-undangan); ini hanya bingkai halaman, lembar RSVP/ucapan, dan tombol musik. */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:auto}
+body{margin:0;background:var(--uy-latar,#F3F6FB);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:#10203A}
+[hidden]{display:none!important}
+
+.uyp-kolom{max-width:480px;margin:0 auto;min-height:100vh;min-height:100svh;background:#fff;box-shadow:0 0 0 1px rgba(16,32,58,.05),0 12px 48px -16px rgba(16,32,58,.25)}
+@media (max-width:520px){.uyp-kolom{box-shadow:none}}
+.uyp-kolom .uy-undangan{max-width:none!important}
+.uyp-kolom .uy-undangan .uy-bag-sampul{min-height:100vh;min-height:100svh}
+.uyp-kolom [data-uy-aksi],.uyp-kolom [data-uy-bagian="rsvp"],.uyp-kolom [data-uy-bagian="ucapan"]{cursor:pointer}
+.uyp-kolom [data-uy-bagian="rsvp"]:focus-visible,.uyp-kolom [data-uy-bagian="ucapan"]:focus-visible,.uyp-kolom [data-uy-aksi]:focus-visible{outline:3px solid var(--uy-acc,#1D4ED8);outline-offset:3px}
+.uyp-kolom [data-uy-bagian="rsvp"] *,.uyp-kolom [data-uy-bagian="ucapan"] *{pointer-events:none}
+
+/* gerbang "Buka undangan": halaman terkunci di sampul sampai tombol ditekan */
+html.uyp-gerbang,html.uyp-gerbang body{overflow:hidden;height:100%}
+html.uyp-lembar-buka,html.uyp-lembar-buka body{overflow:hidden}
+
+.uyp-muat{display:block;width:100%;min-height:44px;border:2px solid #E2E5E9;border-radius:14px;background:#fff;color:var(--uy-acc,#1D4ED8);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.uyp-muat[disabled]{opacity:.6;cursor:wait}
+
+/* tombol musik mengambang, sejajar kolom */
+.uyp-musik{position:fixed;z-index:30;bottom:max(16px,env(safe-area-inset-bottom));right:max(16px,calc(50% - 224px));width:48px;height:48px;border-radius:50%;border:0;background:var(--uy-acc,#1D4ED8);color:var(--uy-onacc,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(16,32,58,.3)}
+.uyp-musik:focus-visible{outline:3px solid var(--uy-ink,#10203A);outline-offset:3px}
+.uyp-musik-garis{position:absolute;width:30px;height:2px;border-radius:2px;background:currentColor;transform:rotate(-45deg);opacity:1}
+.uyp-musik[aria-pressed="true"] .uyp-musik-garis{opacity:0}
+html.uyp-gerbang .uyp-musik{display:none}
+
+/* lembar (bottom sheet) */
+.uyp-lembar{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;--s-bg:var(--uy-page,#fff);--s-ink:var(--uy-ink,#10203A);--s-acc:var(--uy-acc,#1D4ED8);--s-on:var(--uy-onacc,#fff);--s-mut:color-mix(in srgb,var(--s-ink) 55%,var(--s-bg));--s-line:color-mix(in srgb,var(--s-ink) 18%,var(--s-bg));--s-fld:color-mix(in srgb,var(--s-ink) 5%,var(--s-bg))}
+.uyp-latar{position:absolute;inset:0;border:0;padding:0;background:rgba(16,32,58,.55);cursor:pointer;animation:uyp-fade .2s ease-out}
+.uyp-panel{position:relative;width:100%;max-width:480px;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--s-bg);color:var(--s-ink);border-radius:24px 24px 0 0;padding:20px 20px max(24px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(16,32,58,.25);animation:uyp-naik .25s ease-out;outline:none}
+.uyp-kepala{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.uyp-kepala h2{margin:0;font-size:18px;line-height:24px;font-weight:700}
+.uyp-x{flex:none;width:40px;height:40px;border-radius:12px;border:0;background:transparent;color:var(--s-mut);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.uyp-x:hover{background:var(--s-fld)}
+#uyp-form{display:flex;flex-direction:column;gap:14px}
+.uyp-baris{display:flex;flex-direction:column;gap:6px}
+.uyp-baris label,.uyp-baris>span{font-size:13px;font-weight:700}
+.uyp-baris input,.uyp-baris textarea{width:100%;border:2px solid var(--s-line);border-radius:14px;background:var(--s-fld);color:var(--s-ink);font:inherit;font-size:16px;padding:11px 14px}
+.uyp-baris textarea{resize:vertical;min-height:96px}
+.uyp-baris input:focus,.uyp-baris textarea:focus{outline:none;border-color:var(--s-acc);background:var(--s-bg)}
+.uyp-hitung{align-self:flex-end;font-size:11px;color:var(--s-mut)}
+.uyp-pilih{display:flex;gap:8px}
+.uyp-pilih button{flex:1;min-height:46px;border-radius:14px;border:2px solid var(--s-line);background:transparent;color:var(--s-ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.uyp-pilih button[aria-pressed="true"]{background:var(--s-acc);border-color:var(--s-acc);color:var(--s-on)}
+.uyp-jumlah{flex-direction:row;align-items:center;justify-content:space-between}
+.uyp-stepper{display:flex;align-items:center;gap:6px}
+.uyp-stepper button{width:44px;height:44px;border-radius:12px;border:2px solid var(--s-line);background:transparent;color:var(--s-ink);font:inherit;font-size:20px;font-weight:700;cursor:pointer}
+.uyp-stepper output{min-width:36px;text-align:center;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.uyp-sarang{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+.uyp-galat{border-radius:12px;background:#FFE8E8;color:#B42318;padding:10px 12px;font-size:13px;line-height:18px;font-weight:600}
+.uyp-kirim{width:100%;min-height:50px;border:0;border-radius:16px;background:var(--s-acc);color:var(--s-on);font:inherit;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+.uyp-kirim[disabled]{opacity:.6;cursor:wait}
+.uyp-sekunder{margin-top:14px;background:var(--s-fld);color:var(--s-ink);border:2px solid var(--s-line)}
+.uyp-selesai{text-align:center;padding:10px 0 4px;font-size:14px;line-height:21px;color:var(--s-mut)}
+.uyp-selesai-judul{font-size:18px;line-height:24px;font-weight:700;color:var(--s-ink);margin-bottom:6px;overflow-wrap:anywhere}
+.uyp-ucapan{margin-top:18px;border-top:2px solid var(--s-line);padding-top:14px}
+.uyp-ucapan-judul{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--s-mut);margin-bottom:10px}
+#uyp-ucapan-isi{display:flex;flex-direction:column;gap:8px}
+#uyp-ucapan-isi .uy-ucapan{background:var(--s-fld);border:2px solid var(--s-line);border-radius:16px;padding:10px 14px;font-size:13px;line-height:18px;white-space:pre-line;overflow-wrap:anywhere}
+#uyp-ucapan-isi .uy-ucapan-k{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px}
+#uyp-ucapan-isi .uy-ucapan-k span{font-size:11px;color:var(--s-mut);white-space:nowrap}
+
+@keyframes uyp-naik{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+@keyframes uyp-fade{from{opacity:0}to{opacity:1}}
+@media (min-width:640px){.uyp-lembar{align-items:center}.uyp-panel{border-radius:24px;max-height:86vh}}
+@media (prefers-reduced-motion:reduce){.uyp-panel,.uyp-latar{animation:none}}

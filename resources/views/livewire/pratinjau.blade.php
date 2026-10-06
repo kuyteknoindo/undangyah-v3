@@ -13,6 +13,10 @@
         default => '',
     };
     $adaBingkai = $bingkai !== null && in_array($mode, ['terbit', 'draf', 'contoh'], true);
+    // Versi terbit dibuka di alamat publik aslinya; draf dan contoh tetap lewat bingkai pemilik.
+    $tautanTab = $adaBingkai && $mode === 'terbit' && $versiAktif === 'terbit' && $u?->slug
+        ? route('undangan.publik', $u->slug)
+        : $bingkai;
 @endphp
 <div class="mx-auto flex max-w-6xl flex-col gap-5">
 
@@ -91,7 +95,7 @@
 
                         <div class="flex flex-wrap gap-2">
                             @if ($adaBingkai)
-                                <a href="{{ $bingkai }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm"><x-ikon nama="pratinjau-buka" :ukuran="14" /> Buka di tab baru</a>
+                                <a href="{{ $tautanTab }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" data-tab-baru><x-ikon nama="pratinjau-buka" :ukuran="14" /> Buka di tab baru</a>
                             @else
                                 <button type="button" disabled class="btn btn-secondary btn-sm"><x-ikon nama="pratinjau-buka" :ukuran="14" /> Buka di tab baru</button>
                             @endif
