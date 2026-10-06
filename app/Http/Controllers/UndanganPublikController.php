@@ -7,6 +7,7 @@ use App\Models\Rsvp;
 use App\Models\Tamu;
 use App\Models\Ucapan;
 use App\Models\Undangan;
+use App\Services\BukuTamuPengaturan;
 use App\Services\CatatTayangan;
 use App\Services\MetaUndangan;
 use App\Services\Notifikasi;
@@ -71,14 +72,18 @@ class UndanganPublikController extends Controller
 
         ['tamu' => $tamu, 'nama' => $nama] = $this->kenaliTamu($request, $u);
 
-        $semua = Ucapan::query()->where('undangan_id', $u->id)->orderByDesc('id')->limit(self::HALAMAN_UCAPAN + 1)->get();
+        // Sematan selalu di atas (hanya di halaman pertama); yang disembunyikan pemilik tidak pernah tampil.
+        $sematan = Ucapan::query()->tampil()->where('undangan_id', $u->id)->where('disematkan', true)->orderByDesc('id')->limit(Ucapan::MAKS_SEMATAN)->get();
+        $semua = Ucapan::query()->tampil()->where('undangan_id', $u->id)->where('disematkan', false)->orderByDesc('id')->limit(self::HALAMAN_UCAPAN + 1)->get();
         $adaLagi = $semua->count() > self::HALAMAN_UCAPAN;
-        $ucapan = $semua->take(self::HALAMAN_UCAPAN);
+        $biasa = $semua->take(self::HALAMAN_UCAPAN);
+        $ucapan = $sematan->concat($biasa);
 
-        // QR sungguhan baru ada di Fase 5; sampai itu bagian "tamu" (QR contoh) tidak boleh tampil di publik.
-        $opsi = ['tanpaQr' => true, 'ucapan' => $ucapan->map(fn (Ucapan $x) => $this->itemUcapan($x))->all()];
+        $opsi = ['ucapan' => $ucapan->map(fn (Ucapan $x) => $this->itemUcapan($x))->all()];
         if ($tamu || $nama !== '') {
-            $opsi['tamu'] = ['nama' => $tamu?->nama ?? $nama, 'alamat' => '', 'kode' => $tamu?->kode ?? ''];
+            $opsi['tamu'] = ['nama' => $tamu?->nama ?? $nama, 'alamat' => '', 'kode' => $tamu?->kode ?? '',
+                // QR hanya untuk tamu terdaftar (kode valid); tanpa itu bagian QR disembunyikan, bukan QR palsu.
+                'qr' => $tamu ? route('undangan.publik', $u->slug).'?to='.$tamu->kode : ''];
         }
 
         $isi = (array) $u->terbitan['isi'];
@@ -102,7 +107,7 @@ class UndanganPublikController extends Controller
                 'maksJumlah' => $maks,
                 'tampilJumlah' => trim((string) ($isi['rsLabelJumlah'] ?? '')) !== '',
                 'adaLagi' => $adaLagi,
-                'kursor' => $ucapan->last()?->id,
+                'kursor' => $biasa->last()?->id,
                 'judulRsvp' => trim((string) ($isi['rsTitle'] ?? '')) ?: 'Konfirmasi Kehadiran',
                 'judulUcapan' => trim((string) ($isi['wsTitle'] ?? '')) ?: 'Ucapan & Doa',
                 'tombolRsvp' => trim((string) ($isi['rsBtn'] ?? '')) ?: 'Kirim konfirmasi',
@@ -125,7 +130,7 @@ class UndanganPublikController extends Controller
         $u = $this->terbitOr404($slug);
         $sebelum = (int) $request->query('sebelum', 0);
 
-        $semua = Ucapan::query()->where('undangan_id', $u->id)
+        $semua = Ucapan::query()->tampil()->where('undangan_id', $u->id)->where('disematkan', false)
             ->when($sebelum > 0, fn ($q) => $q->where('id', '<', $sebelum))
             ->orderByDesc('id')->limit(self::HALAMAN_UCAPAN + 1)->get();
         $ucapan = $semua->take(self::HALAMAN_UCAPAN);
@@ -191,7 +196,8 @@ class UndanganPublikController extends Controller
         $ucapan = null;
         $rsvp = null;
         $baru = true;
-        DB::transaction(function () use ($u, $tamu, $nilai, &$ucapan, &$baru, &$rsvp) {
+        $buku = app(BukuTamuPengaturan::class)->ambil($u);
+        DB::transaction(function () use ($u, $tamu, $nilai, $buku, &$ucapan, &$baru, &$rsvp) {
             if ($tamu) {
                 $rsvp = Rsvp::query()->updateOrCreate(['undangan_id' => $u->id, 'tamu_id' => $tamu->id], $nilai);
                 $baru = $rsvp->wasRecentlyCreated;
@@ -200,12 +206,12 @@ class UndanganPublikController extends Controller
             }
 
             // Seperti di desain, pesan pada RSVP ikut tampil sebagai ucapan (sekali per isi pesan yang sama untuk tamu bertaut).
-            if ($nilai['pesan'] !== null) {
+            if ($nilai['pesan'] !== null && $buku['buka']) {
                 $terakhir = $tamu ? Ucapan::query()->where('undangan_id', $u->id)->where('tamu_id', $tamu->id)->latest('id')->value('pesan') : null;
                 if ($terakhir !== $nilai['pesan']) {
                     $ucapan = Ucapan::query()->create([
                         'undangan_id' => $u->id, 'tamu_id' => $tamu?->id, 'nama' => $nilai['nama'],
-                        'pesan' => $nilai['pesan'], 'kode_tamu' => $tamu?->kode,
+                        'pesan' => $nilai['pesan'], 'kode_tamu' => $tamu?->kode, 'disembunyikan' => $buku['setujui'],
                     ]);
                 }
             }
@@ -223,7 +229,7 @@ class UndanganPublikController extends Controller
                 ? 'Kehadiran Anda tercatat untuk '.$orang.' orang. Sampai jumpa di hari bahagia kami.'
                 : 'Konfirmasi Anda sudah kami terima. Kami tetap berterima kasih atas doanya.',
             'nama' => $nilai['nama'],
-            'ucapan' => $ucapan ? $this->itemUcapan($ucapan) : null,
+            'ucapan' => $ucapan && ! $ucapan->disembunyikan ? $this->itemUcapan($ucapan) : null,
         ]);
     }
 
@@ -237,6 +243,10 @@ class UndanganPublikController extends Controller
         }
         if ($this->sarang($request)) {
             return $this->json(['ok' => true, 'pesan' => 'Terima kasih.']);
+        }
+        $buku = app(BukuTamuPengaturan::class)->ambil($u);
+        if (! $buku['buka']) {
+            return $this->galat('Kolom ucapan sedang ditutup oleh pemilik undangan.', 403);
         }
         $limiter = $this->kunci('ucapan', $u, $request);
         if (RateLimiter::tooManyAttempts($limiter, self::BATAS_UCAPAN)) {
@@ -264,18 +274,18 @@ class UndanganPublikController extends Controller
 
         $ucapan = Ucapan::query()->create([
             'undangan_id' => $u->id, 'tamu_id' => $tamu?->id, 'nama' => $data['nama'],
-            'pesan' => $data['pesan'], 'kode_tamu' => $tamu?->kode,
+            'pesan' => $data['pesan'], 'kode_tamu' => $tamu?->kode, 'disembunyikan' => $buku['setujui'],
         ]);
 
         $this->beritahu($u, ModelNotifikasi::TIPE_UCAPAN, 'Ucapan baru dari '.$data['nama'],
-            $data['nama'].' mengirim ucapan untuk "'.$u->judul.'": '.Str::limit($data['pesan'], 120),
+            $data['nama'].' mengirim ucapan untuk "'.$u->judul.'": '.Str::limit($data['pesan'], 120).($buku['setujui'] ? ' (menunggu persetujuanmu)' : ''),
             'buku-tamu', ['undangan_id' => $u->id, 'ucapan_id' => $ucapan->id]);
 
         return $this->json([
             'ok' => true,
-            'pesan' => 'Ucapan Anda sudah kami terima dan tampil di daftar.',
+            'pesan' => $buku['setujui'] ? 'Ucapan Anda sudah kami terima dan akan tampil setelah disetujui pemilik undangan.' : 'Ucapan Anda sudah kami terima dan tampil di daftar.',
             'nama' => $data['nama'],
-            'ucapan' => $this->itemUcapan($ucapan),
+            'ucapan' => $buku['setujui'] ? null : $this->itemUcapan($ucapan),
         ]);
     }
 

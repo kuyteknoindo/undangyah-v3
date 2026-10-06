@@ -46,6 +46,8 @@ class CatatTayangan
             'undangan_id' => $u->id,
             'tamu_id' => $tamu?->id,
             'kode_tamu' => $tamu?->kode,
+            // Waktu aplikasi (bukan default basis data, zona sesi bisa beda) supaya statistik per jam/hari benar.
+            'created_at' => now(),
         ]);
 
         return true;

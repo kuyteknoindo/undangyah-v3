@@ -626,7 +626,8 @@ class EditorUndangan extends Component
         $u = $this->undangan();
         $u->isi = $this->susunIsi();
         $u->bagian = $this->bagian;
-        $u->pengaturan = $this->pengaturan;
+        // Hanya kunci milik editor yang ditulis; kunci halaman lain (buku_tamu, hadiah, riwayat_slug) dibiarkan.
+        $u->pengaturan = array_merge(is_array($u->pengaturan) ? $u->pengaturan : [], ['lingkaran' => (bool) ($this->pengaturan['lingkaran'] ?? true)]);
         if (trim($this->judul) !== '') {
             $u->judul = $this->judul;
         }

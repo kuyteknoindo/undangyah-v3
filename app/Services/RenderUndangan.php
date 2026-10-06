@@ -27,7 +27,8 @@ use Illuminate\Support\Carbon;
  *   _latarTetap       {on, src, oc, oo, op, blur} latar tetap gambar (video/slideshow belum didukung)
  *
  * Opsi: edit(bool), lebar (px atau satuan CSS), tamu {nama, alamat, kode} (menampilkan bagian "tamu" dan nama di sampul),
- *       tanpaQr (bool, menyembunyikan bagian "tamu" selama QR sungguhan belum ada), ucapan list<{nama, pesan, waktu?}>.
+ *       tamu.qr (string tautan yang dikodekan jadi QR sungguhan; kunci ada tapi kosong = bagian "tamu" disembunyikan; tanpa kunci = QR penanda tempat untuk pratinjau),
+ *       ucapan list<{nama, pesan, waktu?}>.
  */
 class RenderUndangan
 {
@@ -628,7 +629,7 @@ class RenderUndangan
     private function bTamu(): string
     {
         $tamu = $this->opsi['tamu'] ?? null;
-        if (! $this->edit && (! is_array($tamu) || ! empty($this->opsi['tanpaQr']))) {
+        if (! $this->edit && (! is_array($tamu) || (array_key_exists('qr', $tamu) && trim((string) $tamu['qr']) === ''))) {
             return '';
         }
         $tamu = is_array($tamu) ? $tamu : [];
@@ -636,7 +637,7 @@ class RenderUndangan
         $alamat = trim((string) ($tamu['alamat'] ?? ($this->edit ? $this->v('tmAlamat') : '')));
         $kode = trim((string) ($tamu['kode'] ?? ($this->edit ? $this->v('tmKode') : '')));
 
-        $kartu = '<span class="uy-qr" aria-hidden="true" data-uy-bagian="qr">'.$this->svgQr().'</span>'
+        $kartu = '<span class="uy-qr" aria-hidden="true" data-uy-bagian="qr">'.(! empty($tamu['qr']) ? KodeQr::svg((string) $tamu['qr'], 116) : $this->svgQr()).'</span>'
             .($this->v('qrLabel') !== '' ? '<span class="uy-fl uy-tengah">'.e($this->v('qrLabel')).'</span>' : '')
             .($this->v('sapaan') !== '' ? '<span class="uy-label uy-tengah">'.e($this->v('sapaan')).'</span>' : '')
             .'<span class="uy-tamu-nama">'.e($nama !== '' ? $nama : 'Nama tamu').'</span>'
@@ -963,7 +964,7 @@ class RenderUndangan
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="'.$ukuran.'" height="'.$ukuran.'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'.self::IKON[$nama].'</svg>';
     }
 
-    /** Pola penanda tempat QR (bukan kode sungguhan; QR nyata dibuat di Fase 5). */
+    /** Pola penanda tempat QR untuk pratinjau/editor (QR sungguhan memakai KodeQr bila opsi tamu.qr ada). */
     private function svgQr(): string
     {
         $r = '';

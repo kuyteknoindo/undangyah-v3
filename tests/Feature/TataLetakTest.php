@@ -55,8 +55,8 @@ class TataLetakTest extends TestCase
 
     public function test_halaman_menu_yang_belum_dibuat_tampil_sebagai_placeholder(): void
     {
-        $this->actingAs(User::factory()->create())->get('/statistik')
-            ->assertOk()->assertSee('Statistik')->assertSee('dibuat di tahap berikutnya');
+        $this->actingAs(User::factory()->create())->get('/bantuan')
+            ->assertOk()->assertSee('Pusat Bantuan')->assertSee('dibuat di tahap berikutnya');
     }
 
     public function test_keluar_mengakhiri_sesi(): void

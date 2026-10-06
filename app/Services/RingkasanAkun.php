@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\RiwayatKirim;
+use App\Models\TemplatePesan;
 use App\Models\Undangan;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -40,12 +42,12 @@ class RingkasanAkun
 
     public function jumlahTemplatePesan(User $user): int
     {
-        return 0;
+        return TemplatePesan::where('user_id', $user->id)->count();
     }
 
     public function jumlahPesanTerkirim(User $user): int
     {
-        return 0;
+        return RiwayatKirim::where('user_id', $user->id)->count();
     }
 
     public function notifikasiBelumDibaca(User $user): int

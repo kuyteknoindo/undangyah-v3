@@ -10,6 +10,7 @@ use App\Models\Tema;
 use App\Models\Ucapan;
 use App\Models\Undangan;
 use App\Models\User;
+use App\Services\KodeQr;
 use App\Support\SkemaUndangan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -160,16 +161,29 @@ class UndanganPublikTest extends TestCase
         $this->assertStringContainsString('<title>Raka &amp; Sinta · untuk Bapak Haryanto</title>', $res->getContent());
     }
 
-    public function test_nama_tamu_tampil_di_sampul_dan_qr_contoh_tidak_dipublikasikan(): void
+    public function test_nama_tamu_tampil_di_sampul_dan_qr_sungguhan_hanya_untuk_tamu_terdaftar(): void
     {
         $u = $this->terbit();
         $tamu = Tamu::factory()->create(['undangan_id' => $u->id, 'nama' => 'Ibu Wulandari']);
 
         $res = $this->buka('/raka-sinta?to='.$tamu->kode)->assertOk();
         $this->assertMatchesRegularExpression('/uy-tamu-sampul[^>]*>Ibu Wulandari</', $res->getContent());
-        $res->assertDontSee('data-uy-bagian="qr"', false)->assertDontSee('QR Kehadiran');
+        $res->assertSee('data-uy-bagian="qr"', false)->assertSee('QR Kehadiran');
+        $this->assertMatchesRegularExpression('#data-uy-bagian="qr">\s*<svg[^>]*width="116"#', $res->getContent());
+        // Bukan penanda tempat (viewBox 21x21 dengan 3 kotak pencari) melainkan QR sungguhan dari link pribadi tamu.
+        $res->assertDontSee('viewBox="0 0 21 21"', false);
+        $this->assertStringContainsString(KodeQr::svg(route('undangan.publik', 'raka-sinta').'?to='.$tamu->kode, 116), $res->getContent());
 
-        $this->buka('/raka-sinta')->assertOk()->assertDontSee('uy-tamu-sampul', false);
+        $this->buka('/raka-sinta')->assertOk()->assertDontSee('uy-tamu-sampul', false)->assertDontSee('data-uy-bagian="qr"', false);
+    }
+
+    public function test_sapaan_nama_tanpa_kode_tamu_tidak_menampilkan_qr(): void
+    {
+        $this->terbit();
+
+        $res = $this->buka('/raka-sinta?to=Pak%20Budi')->assertOk();
+        $this->assertMatchesRegularExpression('/uy-tamu-sampul[^>]*>Pak Budi</', $res->getContent());
+        $res->assertDontSee('data-uy-bagian="qr"', false)->assertDontSee('QR Kehadiran');
     }
 
     public function test_kode_asing_atau_milik_undangan_lain_diabaikan(): void

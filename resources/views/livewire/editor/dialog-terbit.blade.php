@@ -8,6 +8,14 @@
             @if ($u->diterbitkan_at)Diterbitkan {{ $u->diterbitkan_at->timezone(config('app.timezone'))->translatedFormat('j F Y, H:i') }} · @endif tema {{ $tema?->nama ?? '-' }}.
             Tamu bisa membuka link ini. Tambahkan <b>?to=Nama%20Tamu</b> di akhir link untuk menyapa tamu dengan namanya.
         </p>
+        <div class="flex items-center gap-3 rounded-2xl border-2 border-[#e2e5e9] p-3">
+            <span class="block size-[112px] flex-none overflow-hidden rounded-lg bg-white [&>svg]:size-full" role="img" aria-label="Kode QR link undangan">{!! \App\Services\KodeQr::svg($url, 224) !!}</span>
+            <div class="min-w-0 text-[13px] leading-[19px] text-[#454b55]">
+                <div class="font-bold text-ink">Kode QR link undangan</div>
+                Cetak di undangan fisik atau tampilkan di layar.
+                @if (\Illuminate\Support\Facades\Route::has('bagikan'))<a href="{{ route('bagikan', ['undangan' => $u->id]) }}" wire:navigate class="mt-1 block font-bold text-brand">Unduh QR di Bagikan Undangan</a>@endif
+            </div>
+        </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ $url }}" target="_blank" rel="noopener" class="ed-kecil"><x-ikon nama="editor-luar" :ukuran="14" />Buka sebagai tamu</a>
             <a href="https://wa.me/?text={{ rawurlencode('Dengan hormat, kami mengundang Anda ke acara '.$u->judul.'. Buka undangan digital kami: '.$url.'?to=Nama%20Tamu') }}" target="_blank" rel="noopener" class="ed-kecil"><x-ikon nama="bagikan" :ukuran="14" />Bagikan WhatsApp</a>
