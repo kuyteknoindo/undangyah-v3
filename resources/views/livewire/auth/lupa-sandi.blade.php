@@ -4,7 +4,7 @@
             <x-auth-kepala judul="Lupa kata sandi?" sub="Masukkan email akunmu. Kami kirim kode untuk mengatur ulang kata sandi." />
             <form wire:submit="kirimKode" class="flex flex-col gap-4" novalidate>
                 <x-field id="ls-email" label="Email" ikon="surel" type="email" wire:model="email" autocomplete="email" placeholder="nama@email.com" :galat="$errors->first('email')" />
-                <p class="m-0 text-xs leading-5 text-muted">Demi keamanan, kami tidak memberi tahu apakah email sudah terdaftar. Jika terdaftar, kode 6 digit akan dikirim.</p>
+                <p class="m-0 text-xs leading-5 text-muted">Demi keamanan, kami tidak memberi tahu apakah email sudah terdaftar. Jika terdaftar, kode {{ $panjang }} digit akan dikirim.</p>
                 <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="kirimKode">
                     <span wire:loading.remove wire:target="kirimKode">Kirim Kode</span>
                     <span wire:loading wire:target="kirimKode">Mengirim kode...</span>
@@ -14,12 +14,12 @@
         @break
 
         @case(2)
-            <x-auth-kepala judul="Masukkan kode" :sub="'Jika '.$tujuan.' terdaftar, kode 6 digit sudah dikirim ke sana.'" />
+            <x-auth-kepala judul="Masukkan kode" :sub="'Jika '.$tujuan.' terdaftar, kode '.$panjang.' digit sudah dikirim ke sana.'" />
             <form wire:submit="verifikasi" class="flex flex-col gap-4" novalidate>
                 @if ($info)
                     <div role="status" class="flex items-center gap-2 rounded-[10px] bg-success-50 px-3 py-2.5 text-[13px] leading-[18px] font-medium text-success"><x-ikon nama="centang" :ukuran="16" /> {{ $info }}</div>
                 @endif
-                <x-kode-otp aksi="verifikasi" :galat="$errors->first('kode')" />
+                <x-kode-otp aksi="verifikasi" :panjang="$panjang" :galat="$errors->first('kode')" />
                 <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="verifikasi">
                     <span wire:loading.remove wire:target="verifikasi">Verifikasi</span>
                     <span wire:loading wire:target="verifikasi">Memeriksa kode...</span>

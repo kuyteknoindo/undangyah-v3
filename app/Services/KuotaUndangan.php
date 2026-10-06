@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AddOn;
 use App\Models\AddonPengguna;
+use App\Models\Paket;
 use App\Models\Pengaturan;
 use App\Models\Tema;
 use App\Models\Undangan;
@@ -19,7 +20,11 @@ use App\Models\User;
  */
 class KuotaUndangan
 {
-    private const PERINGKAT = ['gratis' => 0, 'premium' => 1, 'deluxe' => 2];
+    /** Peringkat bawaan bila katalog paket kosong (mis. sebelum seeder berjalan). */
+    private const PERINGKAT_BAWAAN = ['gratis' => 0, 'premium' => 1, 'deluxe' => 2];
+
+    /** @var array<string,int>|null */
+    private ?array $peringkat = null;
 
     public function aktif(): bool
     {
@@ -30,7 +35,24 @@ class KuotaUndangan
     {
         $paket = $user->paketAktif();
 
-        return isset(self::PERINGKAT[$paket]) ? $paket : 'gratis';
+        return isset($this->peringkat()[$paket]) ? $paket : 'gratis';
+    }
+
+    /**
+     * Peringkat paket (kode => urutan naik) dari katalog: Gratis paling rendah, lalu menurut harga, urutan, dan id.
+     * Dengan begitu paket buatan admin ikut punya peringkat untuk membandingkan dengan `tema.tier`.
+     *
+     * @return array<string,int>
+     */
+    public function peringkat(): array
+    {
+        if ($this->peringkat === null) {
+            $kode = Paket::query()->orderBy('harga')->orderBy('urutan')->orderBy('id')->pluck('kode')->all();
+            usort($kode, fn ($a, $b) => ($b === 'gratis') <=> ($a === 'gratis'));
+            $this->peringkat = $kode === [] ? self::PERINGKAT_BAWAAN : array_flip(array_values($kode));
+        }
+
+        return $this->peringkat;
     }
 
     /** Batas jumlah undangan, atau null bila tanpa batas. */
@@ -74,6 +96,8 @@ class KuotaUndangan
             return false;
         }
 
-        return (self::PERINGKAT[strtolower($tema->tier)] ?? 0) > self::PERINGKAT[$this->paket($user)];
+        $peringkat = $this->peringkat();
+
+        return ($peringkat[strtolower($tema->tier)] ?? 0) > ($peringkat[$this->paket($user)] ?? 0);
     }
 }

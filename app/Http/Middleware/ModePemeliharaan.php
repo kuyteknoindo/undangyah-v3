@@ -14,7 +14,7 @@ class ModePemeliharaan
     {
         if (! Pengaturan::ambil('pemeliharaan.aktif', false)
             || $request->user()?->isAdmin()
-            || $request->routeIs('masuk', 'keluar', 'offline', 'livewire.*')
+            || $request->routeIs('masuk', 'keluar', 'offline', 'livewire.*', '*livewire.update')
             || $request->is('up')) {
             return $next($request);
         }

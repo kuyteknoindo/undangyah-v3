@@ -3,9 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\ItemPesanan;
+use App\Models\Notifikasi as ModelNotifikasi;
 use App\Models\Pesanan;
+use App\Models\User;
 use App\Services\Keranjang;
 use App\Services\KonfirmasiPesanan;
+use App\Services\Notifikasi;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -94,11 +97,28 @@ class KonfirmasiPembayaran extends Component
         $this->reset('bukti');
 
         $lama = $pesanan->bukti_path;
-        $pesanan->forceFill(['bukti_path' => $path, 'bukti_nama' => $nama, 'bukti_at' => now(), 'bukti_ditolak_at' => null])->save();
+        $pesanan->forceFill(['bukti_path' => $path, 'bukti_nama' => $nama, 'bukti_at' => now(), 'bukti_ditolak_at' => null, 'ditunda_at' => null])->save();
         if ($lama && $lama !== $path) {
             Storage::disk(KonfirmasiPesanan::DISK_BUKTI)->delete($lama);
         }
+        $this->beritahuAdmin($pesanan);
         $this->dispatch('toast', pesan: 'Bukti pembayaran terkirim. Admin akan memverifikasinya.', tipe: 'sukses');
+    }
+
+    /** Semua admin diberi tahu ada bukti baru; tautan membuka Data Pesanan yang sudah dicari ke nomor ini. */
+    private function beritahuAdmin(Pesanan $pesanan): void
+    {
+        $notifikasi = app(Notifikasi::class);
+        foreach (User::where('role', User::PERAN_ADMIN)->pluck('id') as $adminId) {
+            $notifikasi->kirim(
+                $adminId,
+                ModelNotifikasi::TIPE_PEMBAYARAN,
+                'Bukti pembayaran baru',
+                'Pesanan '.$pesanan->nomor.' ('.$pesanan->pembeli_nama.', Rp '.number_format($pesanan->total, 0, ',', '.').') mengunggah bukti pembayaran. Mohon diverifikasi.',
+                '/admin/pesanan?cari='.$pesanan->nomor,
+                ['pesanan' => $pesanan->nomor],
+            );
+        }
     }
 
     public function hapusBukti(): void

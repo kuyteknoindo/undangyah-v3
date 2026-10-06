@@ -143,12 +143,63 @@ class KonfirmasiPesanan
         return $berubah;
     }
 
-    /** Tandai satu pesanan menunggu yang lewat batas sebagai kedaluwarsa. */
-    public function kedaluwarsakan(Pesanan $pesanan): bool
+    /**
+     * Tandai pesanan lunas sebagai refund (dicatat saja; pengembalian dana dilakukan di luar aplikasi). Dengan
+     * $turunkanPaket, paket pengguna dikembalikan ke Gratis bila paket yang dibeli pesanan ini masih yang aktif.
+     *
+     * @return bool true bila status berubah sekarang
+     */
+    public function refund(Pesanan $pesanan, string $alasan, bool $turunkanPaket = false): bool
     {
-        $berubah = DB::transaction(function () use ($pesanan) {
+        $alasan = trim($alasan);
+        $turun = false;
+        $berubah = DB::transaction(function () use ($pesanan, $alasan, $turunkanPaket, &$turun) {
             $p = $this->kunci($pesanan);
-            if ($p->status !== Pesanan::MENUNGGU || ! $p->kedaluwarsa_at || $p->kedaluwarsa_at->isFuture()) {
+            if ($p->status !== Pesanan::LUNAS) {
+                return false;
+            }
+            if ($turunkanPaket) {
+                $itemPaket = $p->item->firstWhere('tipe', ItemPesanan::PAKET);
+                $kode = $itemPaket ? (string) ($itemPaket->efek['paket'] ?? $itemPaket->kode) : null;
+                $user = User::lockForUpdate()->find($p->user_id);
+                if ($kode && $user && $user->paket === $kode) {
+                    $user->paket = 'gratis';
+                    $user->paket_sampai = null;
+                    $user->save();
+                    $turun = true;
+                }
+            }
+            $p->status = Pesanan::REFUND;
+            $p->refund_at = now();
+            $p->catatan_admin = $alasan !== '' ? $alasan : $p->catatan_admin;
+            $p->save();
+
+            return true;
+        });
+
+        if ($berubah) {
+            $this->notifikasi->kirim(
+                $pesanan->user_id,
+                ModelNotifikasi::TIPE_PEMBAYARAN,
+                'Pesanan di-refund',
+                'Pesanan '.$pesanan->nomor.' ditandai refund.'.($alasan !== '' ? ' Alasan: '.$alasan : '').($turun ? ' Paketmu kembali ke Gratis.' : ''),
+                '/billing',
+            );
+        }
+        $pesanan->refresh();
+
+        return $berubah;
+    }
+
+    /** Tandai satu pesanan menunggu yang lewat batas sebagai kedaluwarsa. $paksa: admin menandai sebelum batas waktu. */
+    public function kedaluwarsakan(Pesanan $pesanan, bool $paksa = false): bool
+    {
+        $berubah = DB::transaction(function () use ($pesanan, $paksa) {
+            $p = $this->kunci($pesanan);
+            if ($p->status !== Pesanan::MENUNGGU) {
+                return false;
+            }
+            if (! $paksa && (! $p->kedaluwarsa_at || $p->kedaluwarsa_at->isFuture())) {
                 return false;
             }
             $p->status = Pesanan::KEDALUWARSA;

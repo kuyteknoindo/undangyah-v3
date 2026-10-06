@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-6">
-    <x-auth-kepala judul="Verifikasi email" :sub="'Masukkan kode 6 digit yang dikirim ke '.$emailTersamar" />
+    <x-auth-kepala judul="Verifikasi email" :sub="'Masukkan kode '.$panjang.' digit yang dikirim ke '.$emailTersamar" />
 
     <form wire:submit="verifikasi" class="flex flex-col gap-4" novalidate>
         @if ($info)
@@ -8,7 +8,7 @@
             </div>
         @endif
 
-        <x-kode-otp aksi="verifikasi" :galat="$errors->first('kode')" />
+        <x-kode-otp aksi="verifikasi" :panjang="$panjang" :galat="$errors->first('kode')" />
 
         <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="verifikasi">
             <span wire:loading.remove wire:target="verifikasi">Verifikasi</span>

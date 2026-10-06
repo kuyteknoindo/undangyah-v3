@@ -59,7 +59,7 @@ class LupaSandi extends Component
         $this->tujuan = $email;
         $this->langkah = 2;
         $this->kode = '';
-        $this->jeda = $otp->sisaJeda($email, LayananOtp::TUJUAN_RESET) ?: LayananOtp::JEDA_KIRIM_DETIK;
+        $this->jeda = $otp->sisaJeda($email, LayananOtp::TUJUAN_RESET) ?: $otp->jedaDetik();
     }
 
     public function verifikasi(LayananOtp $otp): void
@@ -71,8 +71,9 @@ class LupaSandi extends Component
         if (RateLimiter::tooManyAttempts($kunci, 10)) {
             $this->gagal('Terlalu banyak percobaan. Coba lagi dalam '.ceil(RateLimiter::availableIn($kunci) / 60).' menit.');
         }
-        if (! preg_match('/^\d{6}$/', $this->kode)) {
-            $this->gagal('Masukkan kode 6 digit.', false);
+        $panjang = $otp->panjang();
+        if (! preg_match('/^\d{'.$panjang.'}$/', $this->kode)) {
+            $this->gagal("Masukkan kode {$panjang} digit.", false);
         }
 
         $hasil = $otp->periksa($this->tujuan, LayananOtp::TUJUAN_RESET, $this->kode);
@@ -109,10 +110,10 @@ class LupaSandi extends Component
         }
 
         $this->kode = '';
-        $this->jeda = LayananOtp::JEDA_KIRIM_DETIK;
+        $this->jeda = $otp->jedaDetik();
         $this->info = 'Jika email terdaftar, kode baru sudah dikirim.';
         $this->resetErrorBag();
-        $this->dispatch('kode-dikirim', detik: LayananOtp::JEDA_KIRIM_DETIK);
+        $this->dispatch('kode-dikirim', detik: $otp->jedaDetik());
         $this->dispatch('otp-reset');
     }
 
@@ -165,8 +166,8 @@ class LupaSandi extends Component
         throw ValidationException::withMessages(['kode' => $pesan]);
     }
 
-    public function render()
+    public function render(LayananOtp $otp)
     {
-        return view('livewire.auth.lupa-sandi')->layout('layouts::guest', ['judul' => 'Lupa kata sandi']);
+        return view('livewire.auth.lupa-sandi', ['panjang' => $otp->panjang()])->layout('layouts::guest', ['judul' => 'Lupa kata sandi']);
     }
 }

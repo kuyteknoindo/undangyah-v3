@@ -41,8 +41,9 @@ class VerifikasiEmail extends Component
             $this->gagal('Terlalu banyak percobaan. Coba lagi dalam '.ceil(RateLimiter::availableIn($kunci) / 60).' menit.');
         }
 
-        if (! preg_match('/^\d{6}$/', $this->kode)) {
-            $this->gagal('Masukkan kode 6 digit.', false);
+        $panjang = $otp->panjang();
+        if (! preg_match('/^\d{'.$panjang.'}$/', $this->kode)) {
+            $this->gagal("Masukkan kode {$panjang} digit.", false);
         }
 
         $hasil = $otp->periksa($user->email, LayananOtp::TUJUAN_VERIFIKASI, $this->kode);
@@ -79,10 +80,10 @@ class VerifikasiEmail extends Component
         }
 
         $this->kode = '';
-        $this->jeda = LayananOtp::JEDA_KIRIM_DETIK;
+        $this->jeda = $otp->jedaDetik();
         $this->info = 'Kode baru sudah dikirim ke email kamu.';
         $this->resetErrorBag();
-        $this->dispatch('kode-dikirim', detik: LayananOtp::JEDA_KIRIM_DETIK);
+        $this->dispatch('kode-dikirim', detik: $otp->jedaDetik());
         $this->dispatch('otp-reset');
     }
 
@@ -96,11 +97,11 @@ class VerifikasiEmail extends Component
         throw ValidationException::withMessages(['kode' => $pesan]);
     }
 
-    public function render()
+    public function render(LayananOtp $otp)
     {
         $email = auth()->user()->email;
 
-        return view('livewire.auth.verifikasi-email', ['emailTersamar' => $this->samarkan($email)])
+        return view('livewire.auth.verifikasi-email', ['emailTersamar' => $this->samarkan($email), 'panjang' => $otp->panjang()])
             ->layout('layouts::guest', ['judul' => 'Verifikasi email']);
     }
 

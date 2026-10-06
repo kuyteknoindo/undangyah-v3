@@ -294,6 +294,11 @@ class UndanganPublikController extends Controller
     /** Salinan terbitan yang dapat dirender, atau null bila belum terbit/rusak. */
     private function terbitan(Undangan $u): ?array
     {
+        // Undangan milik akun yang ditangguhkan admin tidak ditayangkan.
+        if ($u->pengguna?->ditangguhkan_at) {
+            return null;
+        }
+
         return $u->sudahTerbit() && is_array($u->terbitan['isi'] ?? null) ? $u->terbitan : null;
     }
 

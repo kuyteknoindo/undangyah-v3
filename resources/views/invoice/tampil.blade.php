@@ -3,6 +3,8 @@
     $tgl = fn ($t) => $t?->locale('id')->translatedFormat('j F Y, H.i').' WIB';
     [$labelStatus] = $pesanan->infoStatus();
     $status = $pesanan->statusEfektif();
+    // Admin yang membuka invoice milik pengguna lain kembali ke daftar Invoices, bukan ke Billing miliknya.
+    $adminLihat = auth()->user()?->isAdmin() && $pesanan->user_id !== auth()->id() && Route::has('admin.invoices');
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -39,7 +41,7 @@
 </head>
 <body>
     <div class="aksi">
-        <a class="tombol" href="{{ route('billing') }}">&larr; Paket &amp; Billing</a>
+        <a class="tombol" href="{{ $adminLihat ? route('admin.invoices') : route('billing') }}">&larr; {{ $adminLihat ? 'Invoices' : 'Paket & Billing' }}</a>
         <button type="button" class="tombol utama" onclick="window.print()">Cetak / simpan PDF</button>
     </div>
     <main class="kertas">

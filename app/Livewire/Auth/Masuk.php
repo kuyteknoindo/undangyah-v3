@@ -53,6 +53,14 @@ class Masuk extends Component
             throw ValidationException::withMessages(['form' => 'Email atau kata sandi salah.']);
         }
 
+        // Sandi benar tetapi akun ditangguhkan admin: jangan buka sesi (PengamanAkun juga menjaga sesi yang sudah ada).
+        if (Auth::user()?->ditangguhkan_at) {
+            Auth::logout();
+            $this->sandi = '';
+
+            throw ValidationException::withMessages(['form' => 'Akun ini ditangguhkan. Hubungi dukungan bila kamu merasa ini keliru.']);
+        }
+
         RateLimiter::clear($kunciAkun);
         session()->regenerate();
 

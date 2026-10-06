@@ -50,6 +50,8 @@ class Pesanan extends Model
             'kedaluwarsa_at' => 'datetime',
             'dibayar_at' => 'datetime',
             'dibatalkan_at' => 'datetime',
+            'refund_at' => 'datetime',
+            'ditunda_at' => 'datetime',
             'bukti_at' => 'datetime',
             'bukti_ditolak_at' => 'datetime',
         ];

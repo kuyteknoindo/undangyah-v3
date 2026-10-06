@@ -18,9 +18,11 @@ class KodeOtpMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $judul = $this->tujuan === LayananOtp::TUJUAN_RESET
-            ? 'Kode untuk mengatur ulang kata sandi undangyah'
-            : 'Kode verifikasi email undangyah';
+        $judul = match ($this->tujuan) {
+            LayananOtp::TUJUAN_RESET => 'Kode untuk mengatur ulang kata sandi undangyah',
+            LayananOtp::TUJUAN_UJI => 'Uji kode OTP undangyah',
+            default => 'Kode verifikasi email undangyah',
+        };
 
         return new Envelope(subject: $judul);
     }

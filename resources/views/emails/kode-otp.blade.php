@@ -9,6 +9,8 @@
                 Halo{{ $nama !== '' ? ', '.$nama : '' }}.<br>
                 @if ($tujuan === \App\Services\LayananOtp::TUJUAN_RESET)
                     Gunakan kode ini untuk mengatur ulang kata sandi akunmu:
+                @elseif ($tujuan === \App\Services\LayananOtp::TUJUAN_UJI)
+                    Ini kode uji dari Panel Admin untuk memeriksa pengaturan OTP:
                 @else
                     Gunakan kode ini untuk memverifikasi email akunmu:
                 @endif

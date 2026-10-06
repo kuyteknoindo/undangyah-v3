@@ -33,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'phone_verified_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'paket_sampai' => 'datetime',
+            'ditangguhkan_at' => 'datetime',
+            'login_terakhir_at' => 'datetime',
             'email_baru_dikirim_at' => 'datetime',
             'password' => 'hashed',
         ];

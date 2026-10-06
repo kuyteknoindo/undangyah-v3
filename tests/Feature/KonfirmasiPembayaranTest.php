@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\KonfirmasiPembayaran;
 use App\Models\ItemPesanan;
+use App\Models\Notifikasi;
 use App\Models\Pesanan;
 use App\Models\User;
 use App\Models\Voucher;
@@ -101,6 +102,41 @@ class KonfirmasiPembayaranTest extends TestCase
         Storage::disk('local')->assertExists($p->bukti_path);
         $this->assertSame('menunggu', $p->status, 'unggah bukti tidak melunasi pesanan');
         $this->assertSame('gratis', $user->fresh()->paket);
+    }
+
+    public function test_unggah_bukti_memberi_notifikasi_ke_semua_admin_dengan_tautan_ke_data_pesanan(): void
+    {
+        $admin1 = User::factory()->admin()->create();
+        $admin2 = User::factory()->admin()->create();
+        $user = User::factory()->create();
+        $p = $this->pesanan($user);
+
+        $this->halaman($user, $p)->set('bukti', UploadedFile::fake()->image('transfer.png'))->assertHasNoErrors();
+
+        foreach ([$admin1, $admin2] as $a) {
+            $n = Notifikasi::where('user_id', $a->id)->first();
+            $this->assertNotNull($n);
+            $this->assertSame('pembayaran', $n->tipe);
+            $this->assertSame('Bukti pembayaran baru', $n->judul);
+            $this->assertSame('/admin/pesanan?cari='.$p->nomor, $n->tautan);
+            $this->assertStringContainsString($p->nomor, $n->isi);
+        }
+        $this->assertSame(0, Notifikasi::where('user_id', $user->id)->count(), 'pembeli tidak ikut diberi tahu');
+        $this->actingAs($admin1)->get('/admin/pesanan?cari='.$p->nomor)->assertOk()->assertSee($p->nomor);
+    }
+
+    public function test_unggah_ditolak_tidak_memberi_notifikasi_admin_dan_bukti_baru_melepas_pending(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+        $lunas = $this->pesanan($user, ['status' => 'lunas']);
+        $this->halaman($user, $lunas)->set('bukti', UploadedFile::fake()->image('a.png'));
+        $this->assertSame(0, Notifikasi::where('user_id', $admin->id)->count());
+
+        $p = $this->pesanan($user, ['ditunda_at' => now()]);
+        $this->halaman($user, $p)->set('bukti', UploadedFile::fake()->image('b.png'));
+        $this->assertNull($p->fresh()->ditunda_at);
+        $this->assertSame(1, Notifikasi::where('user_id', $admin->id)->count());
     }
 
     public function test_unggah_bukti_baru_mengganti_dan_menghapus_berkas_lama(): void
