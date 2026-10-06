@@ -46,7 +46,7 @@ class IsiUndangan
 
             return [
                 'g' => $b['g'], 'label' => $b['label'], 'v' => (string) ($b['v'] ?? ''), 'kind' => $b['kind'] ?? 'text', 'rows' => (int) ($b['rows'] ?? 0),
-                'opt' => (bool) ($b['opt'] ?? false), 'canvas' => ($b['canvas'] ?? true) !== false, 'hint' => (string) ($b['hint'] ?? ''), 'opts' => $b['opts'] ?? ($kunci === 'scDesc' ? self::OPSI_DESKRIPSI : null),
+                'opt' => (bool) ($b['opt'] ?? false), 'canvas' => ($b['canvas'] ?? true) !== false, 'hint' => (string) ($b['hint'] ?? ''), 'opts' => $kunci === 'musLagu' ? KatalogLagu::opsiEditor() : ($b['opts'] ?? ($kunci === 'scDesc' ? self::OPSI_DESKRIPSI : null)),
             ];
         }
 

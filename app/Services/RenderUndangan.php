@@ -60,6 +60,9 @@ class RenderUndangan
 
     private string $hf;
 
+    /** Pengali ukuran huruf dari dokumen tema (DokumenTema); 1.0 = bawaan. */
+    private float $skala = 1.0;
+
     private bool $edit;
 
     /** @var array<string,mixed> */
@@ -97,7 +100,7 @@ class RenderUndangan
             $bagian = (array) ($t['bagian'] ?? $bagian);
             if (isset($t['tema']) && is_array($t['tema'])) {
                 $tema = new Tema(array_intersect_key($t['tema'], array_flip([
-                    'kode', 'nama', 'tier', 'warna_utama', 'warna_aksen', 'warna_permukaan', 'warna_halaman', 'warna_teks', 'font_judul', 'latar_tetap',
+                    'kode', 'nama', 'tier', 'warna_utama', 'warna_aksen', 'warna_permukaan', 'warna_halaman', 'warna_teks', 'font_judul', 'latar_tetap', 'dokumen',
                 ])));
             }
         }
@@ -111,6 +114,7 @@ class RenderUndangan
         $this->opsi = $opsi;
         $this->edit = ! empty($opsi['edit']);
         $this->w = $this->warnaTema($tema);
+        $this->skala = DokumenTema::skala($tema?->dokumen);
         $this->hf = match ($tema?->font_judul) {
             'jakarta' => self::SANS,
             'script' => self::SKRIP,
@@ -386,6 +390,16 @@ class RenderUndangan
         $artis = $this->v('musArtis');
         $sumber = $this->urlAman($this->v('musUrl'));
         $yt = $this->urlAman($this->v('musLink'));
+        // Lagu pilihan dari katalog admin (hanya yang publik). Judul/artis bawaan skema berarti "belum diubah pengguna" -> pakai data lagu;
+        // link audio/YouTube yang diisi sendiri oleh pengguna tetap diutamakan.
+        $lagu = KatalogLagu::cari($this->v('musLagu'));
+        if ($lagu !== null) {
+            $awal = SkemaUndangan::bidang();
+            $judul = $judul === '' || $judul === ($awal['musJudul']['v'] ?? null) ? $lagu->judul : $judul;
+            $artis = $artis === '' || $artis === ($awal['musArtis']['v'] ?? null) ? ($lagu->keterangan ?: $lagu->artis) : $artis;
+            $sumber ??= $this->urlAman((string) $lagu->urlAudio(), true);
+            $yt ??= $this->urlAman((string) $lagu->urlYoutube());
+        }
         if (! $this->edit && $judul === '' && $sumber === null && $yt === null) {
             return '';
         }
@@ -731,7 +745,7 @@ class RenderUndangan
     {
         $m = array_merge($m, $timpa);
         $o = is_array($this->isi['_gaya'][$k] ?? null) ? $this->isi['_gaya'][$k] : [];
-        $fs = isset($o['fs']) && is_numeric($o['fs']) ? max(8, min(96, (int) $o['fs'])) : (int) $m['fs'];
+        $fs = isset($o['fs']) && is_numeric($o['fs']) ? max(8, min(96, (int) $o['fs'])) : max(8, min(96, (int) round((int) $m['fs'] * $this->skala)));
         $w = ! isset($o['b']) ? (int) $m['w'] : ($o['b'] ? 700 : 400);
         $ta = in_array($o['ta'] ?? $m['ta'], ['left', 'center', 'right'], true) ? ($o['ta'] ?? $m['ta']) : 'left';
         $c = $this->warna((string) ($o['c'] ?? $m['c']));

@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        // Pustaka media (Fase 8). Dilayani nginx sebagai berkas statis lewat symlink public/storage; nama berkas acak dan
+        // ekstensi ditentukan dari isi berkas, sedangkan nginx menolak seluruh *.php (tidak ada eksekusi di folder unggahan).
+        'media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/media'),
+            'url' => '/storage/media',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

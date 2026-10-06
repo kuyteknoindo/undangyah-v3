@@ -164,7 +164,8 @@ class EditorUndangan extends Component
         $meta = $iso->meta($kunci, $this->daftar) ?? ['kind' => 'text', 'rows' => 0, 'opts' => null];
         [$bersih] = $iso->bersihkan($nilai, $meta);
 
-        return $bersih ?? $awal;
+        // Lagu yang dihapus/didrafkan admin tidak boleh diam-diam diganti lagu awal.
+        return $bersih ?? ($kunci === 'musLagu' ? '' : $awal);
     }
 
     /** Urutan sah: semua bagian tepat sekali, Sampul pertama, Penutup terakhir; sembunyi hanya id sah (Sampul tak bisa). */

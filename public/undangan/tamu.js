@@ -30,7 +30,9 @@
   var main = false;
   var dijedaPengguna = false;
   var amanUrl = function (u) { return /^https?:\/\/[^\s]+$/i.test(u); };
-  var punyaAudio = amanUrl(sumber);
+  // Lagu dari pustaka Media berupa path situs (/storage/media/...); lagu dari luar berupa http(s).
+  var amanAudio = function (u) { return amanUrl(u) || /^\/(?!\/)[^\s?#]*$/.test(u); };
+  var punyaAudio = amanAudio(sumber);
 
   function labelMusik() {
     if (tombolMusik) tombolMusik.textContent = main ? (tombolMusik.getAttribute('data-label-on') || 'Pause') : (tombolMusik.getAttribute('data-label') || 'Play');
