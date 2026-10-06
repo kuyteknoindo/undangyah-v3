@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\AddOn;
+use App\Models\AddonPengguna;
 use App\Models\Pengaturan;
 use App\Models\Tema;
 use App\Models\Undangan;
@@ -9,10 +11,11 @@ use App\Models\User;
 
 /**
  * Batas undangan dan kunci tema menurut paket pengguna. Aktif hanya bila Pengaturan `paket.aktif` benar;
- * selama paket belum dikonfigurasi (Fase 6) semuanya tanpa batas.
+ * tanpa itu semuanya tanpa batas.
  *
- * Pengaturan: paket.aktif (bool), paket.kuota (peta paket => jumlah, mis. {"gratis":1,"premium":3,"deluxe":10}).
- * Paket pengguna dibaca dari atribut `paket` (belum ada kolomnya: bawaan "gratis").
+ * Pengaturan: paket.aktif (bool), paket.kuota (peta paket => jumlah, mis. {"gratis":1,"premium":3,"deluxe":10};
+ * diisi dari katalog paket oleh SinkronKuotaPaket). Paket pengguna = `User::paketAktif()` (paket berbayar yang
+ * masa aktifnya habis dihitung gratis). Add-on kuota yang dibeli (`efek.kuota_undangan`) menambah batas.
  */
 class KuotaUndangan
 {
@@ -25,7 +28,7 @@ class KuotaUndangan
 
     public function paket(User $user): string
     {
-        $paket = strtolower((string) ($user->getAttribute('paket') ?: 'gratis'));
+        $paket = $user->paketAktif();
 
         return isset(self::PERINGKAT[$paket]) ? $paket : 'gratis';
     }
@@ -38,7 +41,19 @@ class KuotaUndangan
         }
         $kuota = Pengaturan::ambil('paket.kuota.'.$this->paket($user));
 
-        return is_numeric($kuota) ? max(0, (int) $kuota) : null;
+        return is_numeric($kuota) ? max(0, (int) $kuota) + $this->tambahan($user) : null;
+    }
+
+    /** Tambahan kuota dari add-on yang sudah dibeli. */
+    public function tambahan(User $user): int
+    {
+        $milik = AddonPengguna::jumlahMilik($user->id);
+        if ($milik === []) {
+            return 0;
+        }
+
+        return (int) AddOn::whereIn('kode', array_keys($milik))->get()
+            ->sum(fn (AddOn $a) => ((int) ($a->efek['kuota_undangan'] ?? 0)) * ($milik[$a->kode] ?? 0));
     }
 
     public function terpakai(User $user): int

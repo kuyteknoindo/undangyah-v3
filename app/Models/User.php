@@ -32,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'password_changed_at' => 'datetime',
+            'paket_sampai' => 'datetime',
             'email_baru_dikirim_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -74,6 +75,17 @@ class User extends Authenticatable implements MustVerifyEmail
         $kata = preg_split('/\s+/', trim($this->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
         return mb_strtoupper(collect($kata)->take(2)->map(fn ($k) => mb_substr($k, 0, 1))->implode('')) ?: '?';
+    }
+
+    /** Kode paket yang berlaku sekarang: paket berbayar yang masa aktifnya habis kembali menjadi gratis. */
+    public function paketAktif(): string
+    {
+        $paket = strtolower((string) ($this->paket ?: 'gratis'));
+        if ($paket === 'gratis' || ($this->paket_sampai !== null && $this->paket_sampai->isPast())) {
+            return 'gratis';
+        }
+
+        return $paket;
     }
 
     public function notifikasi(): HasMany

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Paket;
 use App\Models\RiwayatKirim;
 use App\Models\TemplatePesan;
 use App\Models\Undangan;
@@ -9,8 +10,7 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 
 /**
- * Data ringkas untuk halaman Profil. Tabel undangan/tamu (Fase 2) dan paket (Fase 6) belum dipakai di sini:
- * tiap metode mengembalikan nilai kosong yang aman, dan nanti cukup isi metodenya tanpa menyentuh halaman.
+ * Data ringkas untuk halaman Profil. Paket dibaca dari kolom langganan di `users` (Fase 6).
  */
 class RingkasanAkun
 {
@@ -24,8 +24,23 @@ class RingkasanAkun
     /** @return array{kode:string,nama:string,aktif:bool,sampai:?Carbon,berakhir:bool,sisaHari:?int} */
     public function paket(User $user): array
     {
-        // Fase 6: baca paket dan masa berlaku pengguna. Sementara semua akun Gratis.
-        return ['kode' => 'gratis', 'nama' => 'Gratis', 'aktif' => false, 'sampai' => null, 'berakhir' => false, 'sisaHari' => null];
+        $kode = strtolower((string) ($user->paket ?: 'gratis'));
+        if ($kode === 'gratis') {
+            return ['kode' => 'gratis', 'nama' => 'Gratis', 'aktif' => false, 'sampai' => null, 'berakhir' => false, 'sisaHari' => null];
+        }
+
+        $nama = Paket::where('kode', $kode)->value('nama') ?? ucfirst($kode);
+        $sampai = $user->paket_sampai;
+        $berakhir = $sampai !== null && $sampai->isPast();
+
+        return [
+            'kode' => $kode,
+            'nama' => $nama,
+            'aktif' => ! $berakhir,
+            'sampai' => $sampai,
+            'berakhir' => $berakhir,
+            'sisaHari' => $sampai && ! $berakhir ? (int) ceil(now()->diffInSeconds($sampai, false) / 86400) : null,
+        ];
     }
 
     /** Tautan undangan yang sedang dipakai (untuk subjudul menu Link Kustom); null bila belum ada. */

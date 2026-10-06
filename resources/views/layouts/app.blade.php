@@ -78,8 +78,9 @@
         <a href="{{ route('billing') }}" wire:navigate class="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-2.5 text-ink">
             <span class="flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand"><x-ikon nama="bintang" :ukuran="16" /></span>
             <span class="flex min-w-0 flex-col">
-                <span class="text-[13px] leading-[18px] font-semibold">Paket Gratis</span>
-                <span class="truncate text-xs leading-4 text-muted">Lihat paket &amp; billing</span>
+                @php($paketSidebar = auth()->check() ? app(\App\Services\RingkasanAkun::class)->paket(auth()->user()) : null)
+                <span class="text-[13px] leading-[18px] font-semibold">Paket {{ $paketSidebar['nama'] ?? 'Gratis' }}</span>
+                <span class="truncate text-xs leading-4 text-muted">{{ ($paketSidebar['aktif'] ?? false) && $paketSidebar['sampai'] ? 'Aktif sampai '.$paketSidebar['sampai']->translatedFormat('j M Y') : 'Lihat paket & billing' }}</span>
             </span>
         </a>
 

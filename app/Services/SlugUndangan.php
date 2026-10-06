@@ -20,7 +20,7 @@ class SlugUndangan
     public const TERLARANG = [
         'login', 'logout', 'masuk', 'keluar', 'daftar', 'register', 'signup', 'signin', 'lupa-sandi', 'reset', 'verifikasi-email',
         'beranda', 'dashboard', 'admin', 'administrator', 'api', 'livewire', 'up', 'offline', 'akun', 'profil', 'notifikasi',
-        'bantuan', 'hubungi', 'billing', 'checkout', 'pembayaran', 'konfirmasi', 'template', 'tema', 'bagikan', 'share', 'rsvp',
+        'bantuan', 'hubungi', 'billing', 'checkout', 'pembayaran', 'konfirmasi', 'konfirmasi-pembayaran', 'invoice', 'template', 'tema', 'bagikan', 'share', 'rsvp',
         'statistik', 'buku-tamu', 'hadiah', 'edit-undangan', 'buat-undangan', 'undangan', 'tamu', 'ucapan', 'syarat', 'privasi',
         'kebijakan', 'terms', 'privacy', 'storage', 'build', 'assets', 'static', 'public', 'vendor', 'media', 'musik', 'upload',
         'unduh', 'download', 'favicon', 'favicon-ico', 'robots', 'robots-txt', 'sitemap', 'sitemap-xml', 'manifest', 'sw', 'www',
