@@ -14,7 +14,7 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 | 6 Paket dan pembayaran | paket, checkout, transfer manual | SELESAI (tag fase-6) |
 | 7 Admin penjualan/pengguna | produk, add-on, voucher, pesanan, invoice, metode bayar, users, notifikasi, OTP | SELESAI (tag fase-7) |
 | 8 Admin konten/sistem | tema, media, musik, storage, backup | SELESAI (tag fase-8; pemilih foto editor = 8b) |
-| 9 Bantuan dan kualitas | bantuan, kontak, syarat, audit | belum |
+| 9 Bantuan dan kualitas | bantuan, kontak, syarat, audit | halaman SELESAI; audit berjalan |
 
 ## Keputusan (dari pemilik)
 - Email: `MAIL_MAILER=log` dulu; SMTP menyusul. OTP lewat email (bukan WhatsApp); nomor WA opsional saat daftar. Tombol Google/WhatsApp login = "segera hadir".
@@ -85,3 +85,15 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 - Media: disk `media` (`storage/app/public/media`, URL `/storage/media/...`, nama acak 32 hex, tipe dideteksi dari ISI berkas; SVG/HTML/XML/PHP/ZIP ditolak; JPEG/PNG disimpan ulang via GD (EXIF/GPS terbuang), thumbnail webp 480 px); `PenyimpanMedia` (simpan/hapus/kuota/`batasFotoGaleri`), `ReferensiMedia::sinkronPemilik`, `KatalogLagu`; bawaan kuota 100 MB/pengguna, maks 10 MB/file (plafon 12 MB mengikuti batas Livewire), video nonaktif; Storage membersihkan hanya media tak terpakai, tak dirujuk, > 24 jam; Musik tabel `lagu` (kode dipakai `isi['musLagu']`), lagu bawaan l1-l5 tanpa audio (admin perlu mengunggah), pemutar publik menerima path situs.
 - Backup: `pg_dump -Fc` (database), arsip file, penuh; checksum SHA-256; unduh terotorisasi; retensi; jadwal harian 02.00 default NONAKTIF (butuh `schedule:run` aktif); sandi DB hanya via `PGPASSWORD`; **restore ke database hidup sengaja TIDAK otomatis** (instruksi `pg_restore` manual di halaman); "Uji pulihkan" ke DB sementara butuh `ALTER ROLE undangyah_dev CREATEDB` (keputusan pemilik; saat ini tombol nonaktif).
 - Tertunda: penyunting visual berbasis widget Theme Creator (kanvas/drag/animasi/Cover Gate/Musik Global, format dokumen node); `latar_tetap` hanya penanda; pemilih foto/crop/galeri di editor (8b); pembersihan media terjadwal; backup di server yang sama (belum ada salinan luar/enkripsi); komponen unggah admin belum di `PengamanAkun::KOMPONEN_TERBLOKIR`; hapus lagu bawaan membuat default `l1` di skema tidak valid.
+
+### Fase 8b (selesai 2026-10-06): foto di editor
+- Jadi: pemilih/unggah foto (dialog pustaka pengguna, maks 10 sekali unggah, progres, galat kuota), crop (`{ratio: bingkai|asli, zoom 100-300, x/y 0-100}` disimpan sebagai parameter, file asli tak diubah), galeri (batas dari `batasFotoGaleri`, layout grid/masonry/slider, naik/turun, link video http/https), Background Fixed (gambar saja; opasitas/blur/lapisan tervalidasi; hanya bila tema `latar_tetap`). Trait `FotoEditor`.
+- Keamanan: klien hanya kirim id media; `src` diturunkan server dari `Media::url()` milik pengguna (aset sistem tidak bisa dipilih untuk foto undangan); struktur `_foto[slot]={src, mid, crop?}`; `ReferensiMedia::sinkronPemilik` dipanggil tiap perubahan; rate limit 120 aksi/menit.
+- Kelengkapan: Foto lengkap bila foto latar pembuka ada, Gallery bila >= 1 foto; keduanya saran non-blokir di dialog terbit.
+- Tertunda: pilih banyak + seret-urut galeri, tombol Background Fixed di tab Tema, dialog gambar BGF mereset slider belum tersimpan.
+
+### Fase 9 bagian 1 (halaman, 2026-10-06)
+- Jadi: Pusat Bantuan `/bantuan` (10 artikel seed, pencarian server, suara Ya/Tidak per pengguna), Hubungi Layanan `/hubungi` (tiket `TKT-<tahun>-<id>`, rate limit 5/jam, notifikasi ke admin, riwayat sendiri), Syarat `/syarat` dan Privasi `/privasi` (publik, `noindex` selama `legal.contoh` benar).
+- **PEMILIK HARUS MENGISI** lewat `Pengaturan::simpan`: `kontak` = `{whatsapp, email, jam_layanan, jam_buka, jam_tutup, balasan}` (kosong = bagian kontak tidak tampil) dan `legal` = `{syarat:[{judul,isi}], privasi:[...], diperbarui, contoh:false}` (bawaan: teks contoh dari desain). Footer `layouts/guest.blade.php` masih memuat "PT Undangyah Digital" hardcode.
+- FAQ disesuaikan dengan kenyataan aplikasi (transfer bank manual, kode lewat email, WhatsApp belum tersedia).
+- Tertunda: CRUD admin artikel bantuan; halaman admin tiket (lihat/balas/status); lampiran tiket; statistik suara; Pusat Bantuan khusus pengguna login.

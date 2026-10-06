@@ -23,6 +23,4 @@
 <div class="rounded-2xl bg-[#f4f5f7] p-3 text-xs leading-[17px] text-[#666c76]">
     Tarik ikon titik-titik di kiri untuk mengubah urutan bagian; urutan di kanvas ikut berubah. Bisa juga dengan fokus di ikon lalu tekan panah atas atau bawah. Sampul selalu di awal dan Penutup di akhir.
 </div>
-<div class="rounded-2xl border-2 border-dashed border-[#e2e5e9] p-3 text-xs leading-[17px] text-[#666c76]">
-    Foto (sampul, mempelai, galeri) dan Background Fixed menyusul bersama pustaka Media.
-</div>
+@include('livewire.editor.kiri-bgf')

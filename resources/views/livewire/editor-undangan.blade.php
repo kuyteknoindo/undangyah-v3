@@ -186,4 +186,7 @@
     </div>
 
     @include('livewire.editor.dialog-terbit')
+    @include('livewire.editor.dialog-bgf')
+    @include('livewire.editor.dialog-crop')
+    @include('livewire.editor.dialog-foto')
 </div>

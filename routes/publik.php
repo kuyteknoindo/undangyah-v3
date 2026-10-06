@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\UndanganPublikController;
+use App\Livewire\SyaratPrivasi;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Route;
  * Kata terlarang dan alamat tak dikenal (termasuk draf) jatuh ke halaman 404.
  */
 $pola = '(?=.{3,60}$)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*';
+
+// Dokumen hukum terbuka untuk umum. Harus sebelum /{slug}; kata 'syarat' dan 'privasi' sudah terlarang sebagai slug.
+Route::get('/syarat', SyaratPrivasi::class)->defaults('dokumen', 'syarat')->name('syarat');
+Route::get('/privasi', SyaratPrivasi::class)->defaults('dokumen', 'privasi')->name('privasi');
 
 Route::get('/{slug}', [UndanganPublikController::class, 'tampil'])->where('slug', $pola)->name('undangan.publik');
 Route::get('/{slug}/ucapan', [UndanganPublikController::class, 'daftarUcapan'])->where('slug', $pola)->name('undangan.publik.ucapan.daftar');

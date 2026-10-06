@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             TemaSeeder::class,
             PaketSeeder::class,
+            BantuanSeeder::class,
         ]);
     }
 }

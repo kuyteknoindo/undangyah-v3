@@ -65,7 +65,7 @@ class PenerbitUndangan
         $sembunyi = $u->bagian['sembunyi'] ?? [];
         $saran = [];
         foreach (SkemaUndangan::bagian() as $id => $def) {
-            if (($def['req'] ?? false) && ! in_array($id, $sembunyi, true) && ! in_array($id, ['foto', 'gallery'], true) && ! $this->isian->status($id, $isi, $daftar)['done']) {
+            if (($def['req'] ?? false) && ! in_array($id, $sembunyi, true) && ! $this->isian->status($id, $isi, $daftar)['done']) {
                 $saran[] = ['teks' => 'Bagian '.$def['name'].' belum lengkap', 'kunci' => 'sec:'.$id];
             }
         }

@@ -210,7 +210,8 @@ class IsiUndangan
     }
 
     /**
-     * Status kelengkapan bagian (port dari status() di desain). Bagian foto dan gallery belum dinilai (menunggu pustaka media).
+     * Status kelengkapan bagian (port dari status() di desain). Foto dinilai: bagian Foto lengkap bila foto latar pembuka ada,
+     * Gallery lengkap bila minimal satu foto galeri terisi. Foto sampul/mempelai/penutup opsional (renderer punya tampilan awal).
      *
      * @return array{done:bool,any:bool}
      */
@@ -245,9 +246,32 @@ class IsiUndangan
             'dresscode' => ['done' => $nilai('dcTema') !== '' && $n('wr') > 0, 'any' => $nilai('dcTema') !== '' || $n('wr') > 0],
             'rsvp' => ['done' => $nilai('rsTitle') !== '' && $nilai('rsBtn') !== '' && $nilai('wsTitle') !== '', 'any' => $nilai('rsTitle') !== '' && $nilai('rsBtn') !== '' && $nilai('wsTitle') !== ''],
             'tamu' => ['done' => $nilai('qrTitle') !== '' && $nilai('tmNama') !== '', 'any' => $nilai('qrTitle') !== '' && $nilai('tmNama') !== ''],
-            'foto', 'gallery' => ['done' => false, 'any' => false],
+            'foto' => ['done' => self::fotoAda($isi, 'latar'), 'any' => self::fotoAda($isi, 'latar')],
+            'gallery' => ['done' => self::jumlahFotoGaleri($isi, $daftar) > 0, 'any' => self::jumlahFotoGaleri($isi, $daftar) > 0],
             default => ['done' => true, 'any' => true],
         };
+    }
+
+    /** Slot `_foto[slot]` terisi (nilai berupa URL atau {src, crop}). */
+    public static function fotoAda(array $isi, string $slot): bool
+    {
+        $f = $isi['_foto'][$slot] ?? null;
+        $src = is_array($f) ? ($f['src'] ?? '') : $f;
+
+        return is_string($src) && trim($src) !== '';
+    }
+
+    /** Jumlah slot galeri (`g{id}` untuk id di daftar `gl`) yang sudah berisi foto. */
+    public static function jumlahFotoGaleri(array $isi, array $daftar): int
+    {
+        $n = 0;
+        foreach (array_unique((array) ($daftar['gl'] ?? [])) as $id) {
+            if (self::fotoAda($isi, 'g'.(int) $id)) {
+                $n++;
+            }
+        }
+
+        return $n;
     }
 
     /**

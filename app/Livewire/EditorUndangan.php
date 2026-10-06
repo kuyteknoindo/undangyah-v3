@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FotoEditor;
 use App\Models\Tema;
 use App\Models\Undangan;
 use App\Services\IsiUndangan;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 /**
  * Editor undangan (Fase 3): panel Bagian/Tema/Pengaturan di kiri, kanvas pratinjau di tengah, isian bagian di kanan.
@@ -27,12 +29,14 @@ use Livewire\Component;
  */
 class EditorUndangan extends Component
 {
+    use FotoEditor, WithFileUploads;
+
     private const MODE = ['edit', 'tamu'];
 
     private const BATAS_TERBIT = 10;
 
-    /** Slot foto (kunci `foto:<slot>` dari kanvas) => bagian pemiliknya. */
-    private const BAGIAN_FOTO = ['cover' => 'sampul', 'latar' => 'foto', 'penutup' => 'penutup', 'pria' => 'mempelai', 'wanita' => 'mempelai', 'share' => 'social', 'bgf' => 'foto'];
+    /** Slot foto (kunci `foto:<slot>` dari kanvas) => bagian pemiliknya. Slot galeri `g{id}` selalu ke bagian Gallery. */
+    private const BAGIAN_FOTO = ['cover' => 'sampul', 'latar' => 'foto', 'penutup' => 'penutup', 'pria' => 'mempelai', 'wanita' => 'mempelai', 'share' => 'social'];
 
     #[Locked]
     public int $undanganId = 0;
@@ -108,6 +112,7 @@ class EditorUndangan extends Component
         $this->undanganId = $u->id;
         $this->model = $u;
         $this->muat($u);
+        $this->muatFoto($u);
     }
 
     /** Muat state dari database: nilai awal skema ditimpa isi tersimpan; kunci tak dikenal dibuang. */
@@ -284,7 +289,13 @@ class EditorUndangan extends Component
         }
         if (str_starts_with($kunci, 'foto:')) {
             $slot = substr($kunci, 5);
-            $this->pilihBagian(self::BAGIAN_FOTO[$slot] ?? (str_starts_with($slot, 'g') ? 'gallery' : 'foto'));
+            if (! $this->slotSah($slot)) {
+                return;
+            }
+            $this->pilihBagian(self::BAGIAN_FOTO[$slot] ?? 'gallery');
+            // Kanvas menandai foto terpilih lewat data-kunci="foto:<slot>"; panel memakai kunci yang sama untuk sorotan dan fokus.
+            $this->terpilih = $kunci;
+            $this->dispatch('bidang-dipilih', kunci: $kunci);
 
             return;
         }
@@ -686,9 +697,7 @@ class EditorUndangan extends Component
         foreach ($this->bagian['urutan'] as $id) {
             $st = $iso->status($id, $isiPenuh, $this->daftar);
             $sembunyi = in_array($id, $this->bagian['sembunyi'], true);
-            $teks = in_array($id, ['foto', 'gallery'], true)
-                ? 'Foto menyusul'
-                : ($st['done'] ? (($definisi[$id]['req'] ?? false) ? 'Lengkap' : 'Terisi') : ($st['any'] ? 'Belum lengkap' : 'Belum diisi'));
+            $teks = $st['done'] ? (($definisi[$id]['req'] ?? false) ? 'Lengkap' : 'Terisi') : ($st['any'] ? 'Belum lengkap' : 'Belum diisi');
             $baris[$id] = [
                 'id' => $id, 'nama' => $definisi[$id]['name'], 'opsional' => ! ($definisi[$id]['req'] ?? false) && ! in_array($id, ['sampul', 'penutup'], true),
                 'selesai' => $st['done'], 'sebagian' => $st['any'], 'sembunyi' => $sembunyi, 'teks' => $teks.($sembunyi ? ' · disembunyikan' : ''),
@@ -759,6 +768,7 @@ class EditorUndangan extends Component
             'rutaPratinjau' => Route::has('pratinjau') ? route('pratinjau', ['undangan' => $u->id]) : null,
             'rutaBagikan' => Route::has('bagikan') ? route('bagikan') : null,
             'tahap' => $this->tahapTerbit,
+            ...$this->dataFoto($aktif),
         ])->layout('layouts::editor', ['judul' => 'Edit Undangan']);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Segera;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -55,8 +56,12 @@ class TataLetakTest extends TestCase
 
     public function test_halaman_menu_yang_belum_dibuat_tampil_sebagai_placeholder(): void
     {
-        $this->actingAs(User::factory()->create())->get('/bantuan')
-            ->assertOk()->assertSee('Pusat Bantuan')->assertSee('dibuat di tahap berikutnya');
+        // Semua menu sudah punya halaman nyata: suntikkan rute placeholder seperti yang dibuat routes/web.php.
+        $this->app['router']->middleware(['web', 'auth'])->get('/_segera', Segera::class)
+            ->defaults('judul', 'Menu Contoh')->name('uji-segera');
+
+        $this->actingAs(User::factory()->create())->get('/_segera')
+            ->assertOk()->assertSee('Menu Contoh')->assertSee('dibuat di tahap berikutnya');
     }
 
     public function test_keluar_mengakhiri_sesi(): void

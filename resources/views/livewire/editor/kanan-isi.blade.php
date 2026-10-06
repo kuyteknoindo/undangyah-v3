@@ -26,13 +26,11 @@
     </div>
 
     @if ($adaFoto)
-        <div class="rounded-2xl border-2 border-dashed border-[#e2e5e9] p-3 text-xs leading-[17px] text-[#666c76]">
-            Foto untuk bagian ini diatur lewat pustaka Media, yang menyusul. Teks dan isian lain sudah bisa diubah di bawah.
-        </div>
+        @include('livewire.editor.foto')
     @endif
 
     @if ($jumlahKolom === 0)
-        <div class="rounded-2xl bg-[#f4f5f7] p-4 text-center text-[13px] text-[#666c76]">Bagian ini hanya berisi foto, jadi belum ada kolom teks.</div>
+        @if (! $adaFoto)<div class="rounded-2xl bg-[#f4f5f7] p-4 text-center text-[13px] text-[#666c76]">Bagian ini hanya berisi foto, jadi belum ada kolom teks.</div>@endif
     @else
         <div class="ed-label">Isi bagian · {{ $jumlahKolom }} kolom</div>
     @endif
