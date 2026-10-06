@@ -52,8 +52,24 @@ class Ikon
         'panah-kanan' => '<path d="m9 18 6-6-6-6"/>',
     ];
 
+    /** @var array<string,string>|null */
+    private static ?array $tambahan = null;
+
+    /** Ikon tambahan per fitur: resources/ikon/*.php, masing-masing mengembalikan ['nama' => '<path .../>']. */
+    private static function tambahan(): array
+    {
+        if (self::$tambahan === null) {
+            self::$tambahan = [];
+            foreach (glob(resource_path('ikon/*.php')) ?: [] as $berkas) {
+                self::$tambahan = array_merge(self::$tambahan, (array) require $berkas);
+            }
+        }
+
+        return self::$tambahan;
+    }
+
     public static function ambil(string $nama): string
     {
-        return self::IKON[$nama] ?? self::IKON['bantuan'];
+        return self::IKON[$nama] ?? self::tambahan()[$nama] ?? self::IKON['bantuan'];
     }
 }

@@ -108,8 +108,15 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <a href="{{ route('notifikasi') }}" wire:navigate aria-label="Notifikasi" class="flex size-10 items-center justify-center rounded-[10px] border border-line-strong bg-white text-nav hover:bg-gray-50">
+                @php($belumDibaca = $pengguna?->jumlahNotifikasiBelumDibaca() ?? 0)
+                <a href="{{ route('notifikasi') }}" wire:navigate
+                   x-data="{ n: {{ $belumDibaca }} }" x-on:notifikasi-dihitung.window="n = $event.detail.jumlah"
+                   x-bind:aria-label="'Notifikasi, ' + n + ' belum dibaca'" aria-label="Notifikasi, {{ $belumDibaca }} belum dibaca"
+                   class="relative flex size-10 items-center justify-center rounded-[10px] border border-line-strong bg-white text-nav hover:bg-gray-50">
                     <x-ikon nama="lonceng" :ukuran="18" />
+                    <span x-show="n > 0" @if ($belumDibaca < 1) x-cloak @endif aria-hidden="true" data-badge-notifikasi
+                          class="absolute -top-[5px] -right-[5px] box-border h-[18px] min-w-[18px] rounded-full border-2 border-white bg-[#EF4444] px-[5px] text-center text-[10px] leading-3.5 font-semibold text-white"
+                          x-text="n > 99 ? '99+' : n">{{ $belumDibaca > 99 ? '99+' : $belumDibaca }}</span>
                 </a>
                 <a href="{{ route('akun') }}" wire:navigate aria-label="Buka pengaturan akun" class="flex items-center gap-2.5 rounded-[10px] border border-line-strong bg-white py-1 pr-3 pl-1 hover:bg-gray-50">
                     <span class="flex size-8 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">{{ $pengguna?->inisial() }}</span>

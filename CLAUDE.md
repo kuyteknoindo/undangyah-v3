@@ -51,3 +51,13 @@ Baca halaman desain terkait -> rencana singkat di `PROGRESS.md` -> migrasi/model
 
 ## Berkas rahasia lokal (di luar repo atau ter-ignore)
 `/home/deploy/undangyah/BASIC-AUTH.txt`, `/home/deploy/undangyah/ADMIN-LOGIN.txt` (kata sandi admin awal; izin 600), `.env`. Jangan dicetak.
+
+## Aturan kerja paralel (beberapa agen mengerjakan halaman berbeda sekaligus)
+- Buat berkas BARU milikmu sendiri; jangan mengedit berkas bersama: `routes/web.php`, `resources/css/app.css`, `app/Support/Ikon.php`, `app/Support/Navigasi.php`, `resources/views/layouts/*`, `app/Models/User.php` (kecuali tambahan kecil yang tak bentrok), `CLAUDE.md`, `PROGRESS.md`. Butuh perubahan di sana: catat di laporan akhir (koordinator yang menerapkan).
+- Ikon baru: buat `resources/ikon/<fitur>.php` yang `return ['nama-ikon' => '<path d="..."/>', ...];` (stroke 24x24 gaya Lucide), pakai `<x-ikon nama="nama-ikon">`.
+- CSS: pakai kelas komponen yang ada + utilitas Tailwind. Bila terpaksa butuh CSS khusus, taruh di blok `<style>` dalam view-mu dengan kelas berawalan nama fiturmu.
+- Rute: berkas `routes/halaman/<fitur>.php` atau `routes/admin/<fitur>.php`.
+- Migrasi: berkas baru berawalan tanggal `2026_10_05_<urutan>_...` dengan urutan 6 digit unik per agen (diberikan koordinator). Jalankan migrasi hanya lewat `flock /tmp/uy-migrate.lock runuser -l deploy -c 'cd ~/undangyah/app && php artisan migrate --force'`. Jangan `migrate:fresh`/`rollback` pada database dev bersama.
+- Build aset: `flock /tmp/uy-build.lock runuser -l deploy -c 'cd ~/undangyah/app && npm run build'`.
+- JANGAN `git commit/tag/push` dan jangan jalankan `pint` pada seluruh proyek (koordinator yang melakukannya). Jalankan hanya tesmu (`--filter` atau berkas tesmu); format berkasmu sendiri dengan `vendor/bin/pint <path-berkasmu>`.
+- Akun uji QA: pakai email `qa-<fiturmu>-<acak>@example.test`; bersihkan dengan `undangyah:qa-bersih` hanya bila tidak ada agen lain yang sedang QA (atau hapus akunmu sendiri lewat tinker).

@@ -6,7 +6,7 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 | Fase | Isi | Status |
 |---|---|---|
 | 0 Fondasi | kerangka, layout, komponen dasar, peran, seeder admin, 404/offline/pemeliharaan | SELESAI (tag fase-0) |
-| 1 Akun | daftar/masuk/lupa sandi/OTP (selesai), profil, ubah sandi, notifikasi | sebagian |
+| 1 Akun | daftar/masuk/lupa sandi/OTP, profil, edit profil, informasi akun, ubah sandi, notifikasi | SELESAI (tag fase-1) |
 | 2 Data inti + Beranda | tabel inti, Beranda, wizard buat undangan | belum |
 | 3 Editor undangan | editor, terbit, slug, pratinjau, template | belum |
 | 4 Undangan publik | `/{slug}`, RSVP, ucapan, OG | belum |
@@ -39,3 +39,9 @@ Catatan konteks lintas sesi. Perbarui di akhir tiap fase. Rencana asli: dokumen 
 - Keputusan kecil: rute per fitur di `routes/halaman`, `routes/admin`, `routes/publik.php` (placeholder otomatis hilang); halaman pemeliharaan memakai middleware global web (admin lolos); tema/komponen memakai nama kelas Indonesia.
 - Tes: 57 lulus. QA browser lolos (admin awal masuk, 404, offline).
 - Tertunda: logo asli, SMTP, Cloudflare Access.
+
+### Fase 1 (selesai 2026-10-06)
+- Jadi: profil (`/akun`), edit profil + foto, informasi akun (konfirmasi email baru lewat tautan bertanda tangan), ubah sandi, daftar notifikasi + badge header, layanan notifikasi.
+- Perbaikan saat penutupan: `@php(...)` inline bentrok dengan `@php ... @endphp` di view notifikasi (pakai blok); regex tes badge dibuat toleran spasi.
+- Tes: 96 lulus. QA browser 1440 dan 390 px: 5 halaman 200, tanpa galat JS. Catatan: skrip QA jalan sebagai root (lib memakai `runuser`); QA lambat (~20 dtk/halaman).
+- Skema inti Fase 2 (tema, undangan, tamu, rsvp, ucapan, tayangan, slug, skema editor) sudah dimigrasi bersama Fase 1; dilanjutkan di Fase 2.
