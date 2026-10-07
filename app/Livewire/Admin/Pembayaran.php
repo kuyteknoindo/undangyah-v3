@@ -277,7 +277,11 @@ class Pembayaran extends Component
 
             return;
         }
+        if (! $this->butuhSandi('Hapus metode pembayaran', 'hapus')) {
+            return;
+        }
         $m->delete();
+        $this->hapusId = null;
         LogAksiAdmin::catat(auth()->user(), 'metode_bayar_hapus', null, ['metode' => $m->label, 'kode' => $m->kode]);
         $this->dispatch('toast', pesan: 'Metode '.$m->label.' dihapus.', tipe: 'sukses');
     }

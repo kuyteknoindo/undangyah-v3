@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Admin\DataPesanan;
 use App\Livewire\Admin\Invoices;
+use App\Livewire\Admin\LogAudit;
 use App\Livewire\Admin\PustakaMedia;
 use App\Livewire\Admin\Users;
 use App\Livewire\Bagikan;
@@ -15,6 +16,7 @@ use App\Livewire\RsvpTamu;
 use App\Livewire\Statistik;
 use App\Models\HadiahMasuk;
 use App\Models\ItemPesanan;
+use App\Models\LogAksiAdmin;
 use App\Models\Media;
 use App\Models\Pesanan;
 use App\Models\RiwayatKirim as ModelRiwayatKirim;
@@ -132,5 +134,24 @@ class PerformaKueriTest extends TestCase
             [$besar, $sql] = $this->hitung(fn () => Livewire::actingAs($admin)->test($kelas));
             $this->assertLessThanOrEqual($kecil[$nama], $besar, "{$nama}: kueri tumbuh bersama data.\n".implode("\n", $sql));
         }
+    }
+
+    public function test_halaman_log_audit_tidak_n_plus_1(): void
+    {
+        $admins = User::factory()->admin()->count(3)->create();
+        $isi = function (int $n) use ($admins) {
+            foreach (range(1, $n) as $i) {
+                LogAksiAdmin::catat($admins[$i % 3], 'pesanan_lunas', null, ['nomor' => 'INV-'.$i]);
+            }
+        };
+
+        $buka = fn () => Livewire::actingAs($admins[0])->test(LogAudit::class)->call('muat')->call('ke', 1)->set('cari', 'inv');
+
+        $isi(self::KECIL);
+        Model::preventLazyLoading(true);
+        [$kecil] = $this->hitung($buka);
+        $isi(self::BESAR);
+        [$besar, $sql] = $this->hitung($buka);
+        $this->assertLessThanOrEqual($kecil, $besar, "log-audit: kueri tumbuh bersama data.\n".implode("\n", $sql));
     }
 }

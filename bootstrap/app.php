@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [ModePemeliharaan::class, PengamanAkun::class]);
         $middleware->alias(['peran' => PastikanPeran::class]);
+        // Cek peran sebelum route-model binding: pengguna biasa harus mendapat 403 (bukan 404 vs 403 yang membocorkan id yang ada).
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: PastikanPeran::class);
         $middleware->redirectGuestsTo(fn () => route('masuk'));
         $middleware->redirectUsersTo(fn () => route('beranda'));
     })

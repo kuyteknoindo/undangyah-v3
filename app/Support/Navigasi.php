@@ -34,7 +34,7 @@ class Navigasi
     }
 
     /**
-     * Menu Panel Admin: 4 grup, 14 halaman (sesuai desain desktop).
+     * Menu Panel Admin: 4 grup, 15 halaman (sesuai desain desktop).
      *
      * @return list<array{judul:string,item:list<array{label:string,slug:string,ikon:string}>}>
      */
@@ -62,6 +62,7 @@ class Navigasi
             ['judul' => 'Sistem', 'item' => [
                 ['label' => 'Storage', 'slug' => 'storage', 'ikon' => 'admin-storage'],
                 ['label' => 'Backup dan Restore', 'slug' => 'backup', 'ikon' => 'admin-backup'],
+                ['label' => 'Log Audit', 'slug' => 'audit', 'ikon' => 'admin-audit'],
             ]],
         ];
     }

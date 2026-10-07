@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\KonfirmasiPesanan;
 use App\Services\Notifikasi;
 use App\Services\TampilPesananAdmin;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
 
@@ -112,15 +113,31 @@ trait AksiPesananAdmin
             return;
         }
 
-        $berubah = match ($jenis) {
-            'lunas' => $konfirmasi->lunas($p, $alasan !== '' ? $alasan : null),
-            'tolak' => $konfirmasi->tolak($p, $alasan),
-            'batal' => $konfirmasi->tolak($p, $alasan, true),
-            'kedaluwarsa' => $konfirmasi->kedaluwarsakan($p, true),
-            'refund' => $konfirmasi->refund($p, $alasan, $this->turunkan),
-            'tinjau' => $konfirmasi->selesaiTinjau($p, $alasan !== '' ? $alasan : null),
-            default => false,
-        };
+        // Aksi dan jejak auditnya satu transaksi: tidak ada perubahan status uang/akses tanpa catatan siapa pelakunya
+        // (catatan_admin pesanan tidak menyimpan admin). Hanya jalur admin ini; sapuan terjadwal dan aksi pembeli bukan aksi admin.
+        $statusSebelum = $p->status;
+        $berubah = DB::transaction(function () use ($konfirmasi, $jenis, $p, $alasan, $admin, $statusSebelum) {
+            $hasil = match ($jenis) {
+                'lunas' => $konfirmasi->lunas($p, $alasan !== '' ? $alasan : null),
+                'tolak' => $konfirmasi->tolak($p, $alasan),
+                'batal' => $konfirmasi->tolak($p, $alasan, true),
+                'kedaluwarsa' => $konfirmasi->kedaluwarsakan($p, true),
+                'refund' => $konfirmasi->refund($p, $alasan, $this->turunkan),
+                'tinjau' => $konfirmasi->selesaiTinjau($p, $alasan !== '' ? $alasan : null),
+                default => false,
+            };
+            if ($hasil) {
+                LogAksiAdmin::catat($admin, 'pesanan_'.$jenis, User::find($p->user_id), array_filter([
+                    'nomor' => $p->nomor,
+                    'total' => $p->total,
+                    'status_sebelum' => $statusSebelum,
+                    'alasan' => $alasan !== '' ? $alasan : null,
+                    'turunkan_paket' => $jenis === 'refund' ? $this->turunkan : null,
+                ], fn ($v) => $v !== null));
+            }
+
+            return $hasil;
+        });
 
         $this->selesaiAksi();
         if (! $berubah) {
@@ -128,8 +145,6 @@ trait AksiPesananAdmin
 
             return;
         }
-        // Aksi bernilai uang harus punya jejak siapa pelakunya (catatan_admin pesanan tidak menyimpan admin).
-        LogAksiAdmin::catat($admin, 'pesanan_'.$jenis, User::find($p->user_id), ['nomor' => $p->nomor, 'total' => $p->total, 'alasan' => $alasan !== '' ? $alasan : null]);
         $this->dispatch('toast', pesan: match ($jenis) {
             'lunas' => 'Pesanan '.$p->nomor.' ditandai lunas dan diaktifkan.',
             'tolak' => 'Bukti pesanan '.$p->nomor.' ditolak. Pembeli diminta mengunggah ulang.',

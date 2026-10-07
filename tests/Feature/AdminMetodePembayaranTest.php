@@ -183,6 +183,16 @@ class AdminMetodePembayaranTest extends TestCase
         $this->assertDatabaseMissing('metode_pembayaran', ['id' => $m->id]);
     }
 
+    public function test_hapus_metode_tanpa_konfirmasi_sandi_tidak_menghapus_apa_pun(): void
+    {
+        $m = MetodePembayaran::where('kode', 'dompet-digital')->firstOrFail();
+        $k = Livewire::actingAs(User::factory()->admin()->create())->test(Pembayaran::class)
+            ->call('tanyaHapus', $m->id)->assertSet('dialogHapus', true)->call('hapus');
+        $k->assertSet('tampilKonfirmasiSandi', true)->assertSet('tertundaMetode', 'hapus');
+        $this->assertDatabaseHas('metode_pembayaran', ['id' => $m->id]);
+        $this->assertDatabaseMissing('log_aksi_admin', ['aksi' => 'metode_bayar_hapus']);
+    }
+
     public function test_batas_waktu_pembayaran_disimpan_dan_divalidasi(): void
     {
         $this->halaman()->assertSet('kedaluwarsaJam', '24')->set('kedaluwarsaJam', '48')->call('simpanBatasWaktu')->assertHasNoErrors();

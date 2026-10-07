@@ -361,6 +361,37 @@ class KonfirmasiSandiAdminTest extends TestCase
         $this->assertSame(1500, $m->fresh()->biaya_tetap);
     }
 
+    public function test_hapus_metode_pembayaran_butuh_sandi_dan_tercatat(): void
+    {
+        $m = MetodePembayaran::create(['kode' => 'bca', 'label' => 'Transfer BCA', 'tipe' => 'manual', 'urutan' => 9, 'aktif' => false, 'biaya_tetap' => 0, 'biaya_persen' => 0, 'kode_unik' => false, 'data' => ['bank' => 'BCA', 'nomor' => '1111222233', 'atas' => 'PT Lama', 'placeholder' => false]]);
+        $k = Livewire::actingAs($this->admin)->test(Pembayaran::class)->call('tanyaHapus', $m->id)->call('hapus');
+
+        $k->assertSet('tampilKonfirmasiSandi', true)->assertSet('tertundaLabel', 'Hapus metode pembayaran');
+        $this->assertDatabaseHas('metode_pembayaran', ['id' => $m->id]);
+        $this->assertDatabaseMissing('log_aksi_admin', ['aksi' => 'metode_bayar_hapus']);
+
+        $k->set('sandiAdmin', 'salah-salah')->call('konfirmasiSandi')->assertHasErrors('sandiAdmin');
+        $this->assertDatabaseHas('metode_pembayaran', ['id' => $m->id]);
+
+        $k->set('sandiAdmin', self::SANDI)->call('konfirmasiSandi')->assertHasNoErrors()->assertSet('sandiAdmin', '')->assertSet('tampilKonfirmasiSandi', false);
+        $this->assertDatabaseMissing('metode_pembayaran', ['id' => $m->id]);
+        $log = LogAksiAdmin::where('aksi', 'metode_bayar_hapus')->firstOrFail();
+        $this->assertSame($this->admin->id, $log->admin_id);
+        $this->assertSame('bca', $log->rincian['kode']);
+        $this->assertStringNotContainsString('1111222233', LogAksiAdmin::all()->toJson());
+    }
+
+    public function test_metode_pembayaran_yang_dipakai_pesanan_tetap_tak_bisa_dihapus_walau_sandi_benar(): void
+    {
+        $m = MetodePembayaran::create(['kode' => 'bca', 'label' => 'Transfer BCA', 'tipe' => 'manual', 'urutan' => 9, 'aktif' => false, 'biaya_tetap' => 0, 'biaya_persen' => 0, 'kode_unik' => false, 'data' => ['bank' => 'BCA', 'nomor' => '1111222233', 'atas' => 'PT Lama', 'placeholder' => false]]);
+        $k = Livewire::actingAs($this->admin)->test(Pembayaran::class)->call('tanyaHapus', $m->id)->call('hapus')->assertSet('tampilKonfirmasiSandi', true);
+        // Pesanan muncul setelah dialog terbuka: pemeriksaan dipakai tetap dijalankan setelah konfirmasi.
+        Pesanan::factory()->create(['metode_id' => $m->id, 'metode_kode' => 'bca']);
+        $k->set('sandiAdmin', self::SANDI)->call('konfirmasiSandi');
+        $this->assertDatabaseHas('metode_pembayaran', ['id' => $m->id]);
+        $this->assertDatabaseMissing('log_aksi_admin', ['aksi' => 'metode_bayar_hapus']);
+    }
+
     // ------------------------------------------------------------ Backup
 
     public function test_hapus_backup_uji_pulih_dan_retensi_butuh_sandi(): void
