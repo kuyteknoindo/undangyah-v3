@@ -1,43 +1,43 @@
-<div class="flex flex-col gap-6">
+<div class="contents">
     <x-auth-kepala judul="Selamat datang kembali" sub="Masuk untuk mengelola undangan, tamu, dan RSVP kamu." />
 
-    <form wire:submit="masuk" class="flex flex-col gap-4" novalidate>
+    <div class="au-form">
         @if ($info)
-            <div role="status" class="flex items-start gap-2 rounded-[10px] bg-warning-50 px-3 py-2.5 text-[13px] leading-[18px] font-medium text-warning">
-                <span class="flex-1">{{ $info }}</span>
-                <button type="button" wire:click="$set('info', '')" aria-label="Tutup" class="-my-1 flex size-7 items-center justify-center text-lg leading-none">&times;</button>
+            <div role="status" aria-live="polite" class="au-kabar">
+                <span>{{ $info }}</span>
+                <button type="button" wire:click="$set('info', '')" aria-label="Tutup">&times;</button>
             </div>
         @endif
 
         @error('form')
-            <div role="alert" class="flex items-center gap-2 rounded-[10px] bg-danger-50 px-3 py-2.5 text-[13px] leading-[18px] font-medium text-danger">
-                <x-ikon nama="peringatan" :ukuran="16" /> {{ $message }}
-            </div>
+            <div role="alert" class="au-kabar au-kabar-galat"><span>{{ $message }}</span></div>
         @enderror
 
-        <x-field id="l-email" label="Email" ikon="surel" type="email" wire:model="email" autocomplete="email" placeholder="nama@email.com" :galat="$errors->first('email')" />
-        <x-field id="l-sandi" label="Kata sandi" ikon="gembok" :sandi="true" wire:model="sandi" autocomplete="current-password" placeholder="Masukkan kata sandi" :galat="$errors->first('sandi')" />
+        <form wire:submit="masuk" class="au-form" novalidate>
+            <x-au.field id="l-email" label="Email" ikon="surel" type="email" wire:model.blur="email" autocomplete="email" placeholder="nama@email.com" :galat="$errors->first('email')" />
+            <x-au.field id="l-sandi" label="Kata sandi" ikon="gembok" :sandi="true" wire:model.blur="sandi" autocomplete="current-password" placeholder="Masukkan kata sandi" :galat="$errors->first('sandi')" />
 
-        <div class="flex items-center justify-between gap-2">
-            <label class="flex min-h-10 cursor-pointer items-center gap-2.5 text-[13px] leading-[18px] font-medium">
-                <input type="checkbox" wire:model="ingat" class="size-[18px] rounded border-line-strong accent-brand"> Ingat saya
-            </label>
-            <a href="{{ route('lupa-sandi') }}" wire:navigate class="inline-flex min-h-6 items-center text-[13px] leading-[18px] font-semibold text-brand hover:underline">Lupa kata sandi?</a>
+            <div class="flex items-center justify-between gap-2">
+                <label class="au-cek">
+                    <input type="checkbox" wire:model="ingat"> Ingat saya
+                </label>
+                <a href="{{ route('lupa-sandi') }}" wire:navigate class="au-lupa">Lupa kata sandi?</a>
+            </div>
+
+            <button type="submit" class="au-tombol au-utama-tombol" wire:loading.attr="disabled" wire:target="masuk">
+                <span wire:loading.remove wire:target="masuk">Masuk</span>
+                <span wire:loading wire:target="masuk">Memeriksa akun...</span>
+            </button>
+        </form>
+
+        <div class="au-pembatas" aria-hidden="true">
+            <span></span><span class="au-pembatas-teks">atau masuk dengan</span><span></span>
+        </div>
+        <div class="au-sosial">
+            <button type="button" wire:click="segera('google')" class="au-tombol au-kedua"><span aria-hidden="true" class="au-g">G</span> Google</button>
+            <button type="button" wire:click="segera('wa')" class="au-tombol au-kedua"><span aria-hidden="true" class="flex" style="color:#3C7A00"><x-ikon nama="whatsapp" :ukuran="18" /></span> WhatsApp</button>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="masuk">
-            <span wire:loading.remove wire:target="masuk">Masuk</span>
-            <span wire:loading wire:target="masuk">Memeriksa akun...</span>
-        </button>
-    </form>
-
-    <div class="flex items-center gap-3" aria-hidden="true">
-        <span class="h-px flex-1 bg-line"></span><span class="text-xs leading-4 font-medium text-muted">atau masuk dengan</span><span class="h-px flex-1 bg-line"></span>
+        <div class="au-bawah">Belum punya akun? <a href="{{ route('daftar') }}" wire:navigate>Daftar sekarang</a></div>
     </div>
-    <div class="grid grid-cols-2 gap-2.5">
-        <button type="button" wire:click="segera('google')" class="btn btn-secondary"><span aria-hidden="true" class="flex size-[22px] items-center justify-center rounded-full bg-canvas text-[13px] font-bold">G</span> Google</button>
-        <button type="button" wire:click="segera('wa')" class="btn btn-secondary"><x-ikon nama="telepon" :ukuran="18" class="text-success" /> WhatsApp</button>
-    </div>
-
-    <p class="m-0 text-center text-sm leading-5 text-muted">Belum punya akun? <a href="{{ route('daftar') }}" wire:navigate class="font-semibold text-brand hover:underline">Daftar sekarang</a></p>
 </div>

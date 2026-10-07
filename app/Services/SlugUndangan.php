@@ -25,7 +25,7 @@ class SlugUndangan
         'kebijakan', 'terms', 'privacy', 'storage', 'build', 'assets', 'static', 'public', 'vendor', 'media', 'musik', 'upload',
         'unduh', 'download', 'favicon', 'favicon-ico', 'robots', 'robots-txt', 'sitemap', 'sitemap-xml', 'manifest', 'sw', 'www',
         'app', 'dev', 'staging', 'test', 'testing', 'support', 'help', 'about', 'contact', 'home', 'index', 'null', 'undefined',
-        'undangyah', 'cdn', 'mail', 'email', 'ftp', 'smtp', 'ns1', 'ns2', 'root', 'system', 'config', 'wp-admin', 'wp-login',
+        'undangyah', 'harga', 'blog', 'cdn', 'mail', 'email', 'ftp', 'smtp', 'ns1', 'ns2', 'root', 'system', 'config', 'wp-admin', 'wp-login',
     ];
 
     /** Ubah teks bebas menjadi bentuk slug (tanpa memeriksa ketersediaan). */

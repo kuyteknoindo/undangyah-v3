@@ -52,7 +52,9 @@ class PenyimpanMedia
     // ------------------------------------------------------------------ unggah
 
     /**
-     * @param  array{tipe?:list<string>,folder?:string,alt?:string,pelaku?:User}  $opsi  tipe = batasi jenis yang diterima (mis. ['gambar'])
+     * @param  array{tipe?:list<string>,folder?:string,alt?:string,pelaku?:User,maks_byte?:int,abaikan_nonaktif?:list<string>,maks_detik?:int}  $opsi  tipe = batasi jenis yang diterima (mis. ['gambar']);
+     *         maks_byte = batas per file khusus unggahan ini (menggantikan batas Storage); abaikan_nonaktif = jenis yang tetap diterima walau
+     *         dinonaktifkan di pengaturan Storage (mis. video latar editor); maks_detik = batas durasi video/audio (diperiksa dari isi berkas bila terbaca)
      *
      * @throws MediaDitolak
      */
@@ -69,8 +71,9 @@ class PenyimpanMedia
         if ($ukuran <= 0) {
             throw new MediaDitolak("{$nama}: file kosong.");
         }
-        if ($ukuran > $konfig['maks_byte']) {
-            throw new MediaDitolak("{$nama} (".self::teksUkuran($ukuran).'): melebihi batas '.self::teksUkuran($konfig['maks_byte']).' per file.');
+        $maksByte = isset($opsi['maks_byte']) ? max(1, (int) $opsi['maks_byte']) : $konfig['maks_byte'];
+        if ($ukuran > $maksByte) {
+            throw new MediaDitolak("{$nama} (".self::teksUkuran($ukuran).'): melebihi batas '.self::teksUkuran($maksByte).' per file.');
         }
 
         $d = $this->deteksi($berkas, $nama);
@@ -78,8 +81,14 @@ class PenyimpanMedia
         if (isset($opsi['tipe']) && ! in_array($d['tipe'], $opsi['tipe'], true)) {
             throw new MediaDitolak("{$nama}: hanya file ".implode(' atau ', array_map(fn ($t) => mb_strtolower(Media::TIPE[$t] ?? $t), $opsi['tipe'])).' yang diterima di sini.');
         }
-        if (! ($konfig['tipe'][$d['tipe']] ?? false)) {
+        if (! ($konfig['tipe'][$d['tipe']] ?? false) && ! in_array($d['tipe'], (array) ($opsi['abaikan_nonaktif'] ?? []), true)) {
             throw new MediaDitolak("{$nama}: unggahan ".mb_strtolower(Media::TIPE[$d['tipe']]).' sedang dinonaktifkan di pengaturan Storage.');
+        }
+        if (isset($opsi['maks_detik']) && in_array($d['tipe'], [Media::VIDEO, Media::AUDIO], true)) {
+            $durasi = $this->durasiDetik((string) $berkas->getRealPath(), $d['ext']);
+            if ($durasi !== null && $durasi > $opsi['maks_detik'] + 1) {
+                throw new MediaDitolak("{$nama}: terlalu panjang (".(int) round($durasi)." detik). Maksimal {$opsi['maks_detik']} detik.");
+            }
         }
         if ($pemilik !== null && $ukuran > $this->sisaBytes($pemilik)) {
             throw new MediaDitolak("{$nama}: kuota penyimpanan ".self::teksUkuran($konfig['kuota_byte']).' akan terlampaui (terpakai '.self::teksUkuran($this->terpakaiBytes($pemilik)).'). Hapus file lain terlebih dahulu.');
@@ -196,6 +205,101 @@ class PenyimpanMedia
         $paket = Paket::where('kode', $user->paketAktif())->first() ?? Paket::where('kode', 'gratis')->first();
 
         return $paket ? (int) $paket->kuota_foto : 3;
+    }
+
+    // ------------------------------------------------------------------ durasi (baca penanda berkas; null bila tak terbaca)
+
+    /** Durasi mp4/webm dalam detik dari metadata di isi berkas. Tidak mendekode video. */
+    public function durasiDetik(string $path, string $ext): ?float
+    {
+        try {
+            return $ext === 'mp4' ? $this->durasiMp4($path) : ($ext === 'webm' ? $this->durasiWebm($path) : null);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** Menelusuri box tingkat atas sampai `moov`, lalu membaca `mvhd` (timescale, duration). */
+    private function durasiMp4(string $path): ?float
+    {
+        $f = fopen($path, 'rb');
+        if ($f === false) {
+            return null;
+        }
+        try {
+            $ukuran = (int) filesize($path);
+            $pos = 0;
+            for ($i = 0; $i < 200 && $pos + 8 <= $ukuran; $i++) {
+                fseek($f, $pos);
+                $h = (string) fread($f, 16);
+                if (strlen($h) < 8) {
+                    return null;
+                }
+                $len = unpack('N', substr($h, 0, 4))[1];
+                $jenis = substr($h, 4, 4);
+                $kepala = 8;
+                if ($len === 1 && strlen($h) >= 16) {
+                    $len = unpack('J', substr($h, 8, 8))[1];
+                    $kepala = 16;
+                } elseif ($len === 0) {
+                    $len = $ukuran - $pos;
+                }
+                if ($len < $kepala) {
+                    return null;
+                }
+                if ($jenis === 'moov') {
+                    fseek($f, $pos + $kepala);
+                    $isi = (string) fread($f, min($len - $kepala, 4 * 1024 * 1024));
+                    $m = strpos($isi, 'mvhd');
+                    if ($m === false) {
+                        return null;
+                    }
+                    $v = ord($isi[$m + 4] ?? "\0");
+                    if ($v === 1) {
+                        $ts = unpack('N', substr($isi, $m + 4 + 4 + 8 + 8, 4))[1] ?? 0;
+                        $du = unpack('J', substr($isi, $m + 4 + 4 + 8 + 8 + 4, 8))[1] ?? 0;
+                    } else {
+                        $ts = unpack('N', substr($isi, $m + 4 + 4 + 4 + 4, 4))[1] ?? 0;
+                        $du = unpack('N', substr($isi, $m + 4 + 4 + 4 + 4 + 4, 4))[1] ?? 0;
+                    }
+
+                    return $ts > 0 ? $du / $ts : null;
+                }
+                $pos += $len;
+            }
+
+            return null;
+        } finally {
+            fclose($f);
+        }
+    }
+
+    /** Mencari elemen Info -> TimecodeScale + Duration pada ~1 MB pertama berkas WebM (EBML). */
+    private function durasiWebm(string $path): ?float
+    {
+        $b = (string) file_get_contents($path, false, null, 0, 1024 * 1024);
+        $i = strpos($b, "\x15\x49\xA9\x66");
+        if ($i === false) {
+            return null;
+        }
+        $info = substr($b, $i, 512);
+        $skala = 1000000;
+        if (($t = strpos($info, "\x2A\xD7\xB1")) !== false) {
+            $n = ord($info[$t + 3] ?? "\x80") & 0x0F;
+            $skala = (int) hexdec(bin2hex(substr($info, $t + 4, max(1, min(8, $n)))));
+        }
+        if (($d = strpos($info, "\x44\x89")) === false) {
+            return null;
+        }
+        $panjang = ord($info[$d + 2] ?? "\x80") & 0x0F;
+        $mentah = substr($info, $d + 3, $panjang);
+        $nilai = match ($panjang) {
+            4 => unpack('G', $mentah)[1] ?? null,
+            8 => unpack('E', $mentah)[1] ?? null,
+            default => null,
+        };
+
+        return $nilai !== null && $skala > 0 ? $nilai * $skala / 1e9 : null;
     }
 
     // ------------------------------------------------------------------ utilitas

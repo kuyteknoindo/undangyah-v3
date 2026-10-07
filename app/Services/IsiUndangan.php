@@ -210,12 +210,12 @@ class IsiUndangan
     }
 
     /**
-     * Status kelengkapan bagian (port dari status() di desain). Foto dinilai: bagian Foto lengkap bila foto latar pembuka ada,
-     * Gallery lengkap bila minimal satu foto galeri terisi. Foto sampul/mempelai/penutup opsional (renderer punya tampilan awal).
+     * Status kelengkapan bagian (port dari status() di desain). Bagian Foto lengkap bila foto sampul dan foto latar pembuka ada;
+     * Gallery lengkap bila foto galeri mencapai 6 (atau batas paket bila lebih kecil, supaya paket kecil tetap bisa "Lengkap").
      *
      * @return array{done:bool,any:bool}
      */
-    public function status(string $id, array $isi, array $daftar): array
+    public function status(string $id, array $isi, array $daftar, ?int $batasGaleri = null): array
     {
         $nilai = fn (string $k): string => trim((string) ($isi[$k] ?? ''));
         $kunci = $this->kunciBagian($id, $daftar);
@@ -246,8 +246,8 @@ class IsiUndangan
             'dresscode' => ['done' => $nilai('dcTema') !== '' && $n('wr') > 0, 'any' => $nilai('dcTema') !== '' || $n('wr') > 0],
             'rsvp' => ['done' => $nilai('rsTitle') !== '' && $nilai('rsBtn') !== '' && $nilai('wsTitle') !== '', 'any' => $nilai('rsTitle') !== '' && $nilai('rsBtn') !== '' && $nilai('wsTitle') !== ''],
             'tamu' => ['done' => $nilai('qrTitle') !== '' && $nilai('tmNama') !== '', 'any' => $nilai('qrTitle') !== '' && $nilai('tmNama') !== ''],
-            'foto' => ['done' => self::fotoAda($isi, 'latar'), 'any' => self::fotoAda($isi, 'latar')],
-            'gallery' => ['done' => self::jumlahFotoGaleri($isi, $daftar) > 0, 'any' => self::jumlahFotoGaleri($isi, $daftar) > 0],
+            'foto' => ['done' => self::fotoAda($isi, 'cover') && self::fotoAda($isi, 'latar'), 'any' => self::fotoAda($isi, 'cover') || self::fotoAda($isi, 'latar') || self::fotoAda($isi, 'penutup')],
+            'gallery' => ['done' => self::jumlahFotoGaleri($isi, $daftar) >= max(1, min(6, $batasGaleri ?? 6)), 'any' => self::jumlahFotoGaleri($isi, $daftar) > 0],
             default => ['done' => true, 'any' => true],
         };
     }

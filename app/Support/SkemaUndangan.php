@@ -76,6 +76,12 @@ class SkemaUndangan
         return self::muat()['FITUR'];
     }
 
+    /** Nama item daftar berulang untuk label (tpl => "acara", "cerita", ...). @return array<string,string> */
+    public static function namaItem(): array
+    {
+        return self::muat()['ITEM_NAME'];
+    }
+
     /** @return array<string,list<array{t:string,item:string,add:string,head?:string}>> */
     public static function daftarBagian(): array
     {

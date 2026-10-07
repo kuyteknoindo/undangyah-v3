@@ -121,6 +121,11 @@
     .nav-item[aria-current='page'] {
         @apply bg-brand-50 font-semibold text-brand;
     }
+
+    /* Submenu Panel Admin (papan Main/AdminProduct): 32px, 13px, rata 9px. */
+    .nav-item-kecil {
+        @apply min-h-8 gap-[9px] rounded-md px-2 text-[13px] leading-[18px] text-[#4b5563];
+    }
 }
 
 /* ---- Komponen SaaS (dipetakan dari kelas a-* di desain desktop) ---- */

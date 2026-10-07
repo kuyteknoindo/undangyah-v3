@@ -7,6 +7,8 @@ use App\Models\Tamu;
 use App\Models\Tayangan;
 use App\Models\Ucapan;
 use App\Models\Undangan;
+use App\Services\KodeQr;
+use App\Services\PesanUndangan;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
@@ -15,19 +17,29 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
+/**
+ * Beranda = dashboard penuh untuk SEMUA akun (papan Main.dc.html). Akun tanpa undangan melihat dashboard yang sama
+ * dengan keadaan kosong per widget; onboarding hanya blok kecil "Langkah menuju undangan siap".
+ */
 class Beranda extends Component
 {
     private const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
     private const HARI = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-    /** semua | terbit | draf */
+    private const FILTER = ['semua', 'utama', 'aktif', 'draf'];
+
+    /** semua | utama | aktif | draf */
     #[Url(as: 'status', except: 'semua')]
     public string $filter = 'semua';
 
     /** Undangan yang disorot di bagian atas; divalidasi terhadap pemilik setiap render. */
     #[Url(as: 'u', except: '')]
     public ?int $utama = null;
+
+    /** Kolom cari di header: menyaring tabel "Undangan saya" (judul, tautan, jenis, atau nama tamu). */
+    #[Url(as: 'cari', except: '')]
+    public string $cari = '';
 
     /** Data berat baru dimuat setelah halaman tampil, supaya kerangka pemuat terlihat. */
     public bool $siap = false;
@@ -52,7 +64,13 @@ class Beranda extends Component
 
     public function pilihFilter(string $filter): void
     {
-        $this->filter = in_array($filter, ['semua', 'terbit', 'draf'], true) ? $filter : 'semua';
+        $filter = $filter === 'terbit' ? 'aktif' : $filter;
+        $this->filter = in_array($filter, self::FILTER, true) ? $filter : 'semua';
+    }
+
+    public function hapusCari(): void
+    {
+        $this->cari = '';
     }
 
     public function tampilkanContoh(): void
@@ -123,18 +141,16 @@ class Beranda extends Component
         };
 
         $data = null;
-        $adaUndangan = false;
         if ($this->siap) {
             $data = $this->muatNyata($pengguna->id);
-            $adaUndangan = $data !== null;
-            if (! $adaUndangan && $this->contoh) {
+            if ($data['kosong'] && $this->contoh) {
                 $data = $this->dataContoh();
             }
         }
 
         $bagikan = null;
         if ($data && ! $data['contoh'] && $this->bagikanId) {
-            $bagikan = collect($data['daftar'])->firstWhere('id', $this->bagikanId);
+            $bagikan = $this->dataBagikan(collect($data['daftar'])->firstWhere('id', $this->bagikanId));
         }
         $hapus = null;
         if ($data && ! $data['contoh'] && $this->hapusId) {
@@ -151,6 +167,7 @@ class Beranda extends Component
         ])->layout('layouts::app', [
             'judul' => "{$sapaan}, {$pengguna->sapaan()}",
             'sub' => 'Ini ringkasan undanganmu hari ini.',
+            'cari' => true,
         ]);
     }
 
@@ -160,8 +177,12 @@ class Beranda extends Component
         return Route::has($nama) ? route($nama, $param) : '#';
     }
 
-    /** @return array<string,mixed>|null null bila pengguna belum punya undangan */
-    private function muatNyata(int $userId): ?array
+    /**
+     * Selalu mengembalikan data dashboard. `kosong` = akun belum punya undangan (semua widget memakai keadaan kosong).
+     *
+     * @return array<string,mixed>
+     */
+    private function muatNyata(int $userId): array
     {
         /** @var Collection<int,Undangan> $semua */
         // Kolom JSON besar (terbitan, bagian, pengaturan, langkah) tidak dipakai Beranda dan ikut terbaca ulang di setiap
@@ -169,17 +190,23 @@ class Beranda extends Component
         $semua = Undangan::query()
             ->select(['id', 'user_id', 'tema_id', 'judul', 'jenis', 'slug', 'status', 'diterbitkan_at', 'ada_perubahan', 'tanggal_acara', 'lokasi_ringkas', 'created_at', 'updated_at'])
             ->where('user_id', $userId)
-            ->withCount(['tamu', 'tayangan', 'rsvp as hadir_count' => fn ($q) => $q->where('status', Rsvp::HADIR)])
+            ->withCount(['tamu', 'rsvp as hadir_count' => fn ($q) => $q->where('status', Rsvp::HADIR)])
             ->latest('updated_at')->latest('id')
             ->get();
 
         if ($semua->isEmpty()) {
-            return null;
+            return $this->dataKosong();
         }
 
         $utama = ($this->utama ? $semua->firstWhere('id', $this->utama) : null) ?? $semua->first();
         $ids = $semua->pluck('id');
-        $hariIni = now()->startOfDay();
+        $kemarin = now()->subDay();
+
+        // "Dilihat" = tamu unik yang membuka + kunjungan tanpa nama (papan); satu kueri untuk semua undangan.
+        $lihat = Tayangan::query()->whereIn('undangan_id', $ids)
+            ->selectRaw('undangan_id, count(distinct tamu_id) as unik, sum(case when tamu_id is null then 1 else 0 end) as anon, sum(case when created_at >= ? then 1 else 0 end) as baru', [$kemarin])
+            ->groupBy('undangan_id')->get()->keyBy('undangan_id');
+        $dilihat = fn (int $id): int => (int) ($lihat[$id]->unik ?? 0) + (int) ($lihat[$id]->anon ?? 0);
 
         $daftar = $semua->map(fn (Undangan $u) => [
             'id' => $u->id,
@@ -188,71 +215,180 @@ class Beranda extends Component
             'jenis' => $u->jenis,
             'slug' => $u->slug,
             'link' => $u->slug ? $this->hostPublik().'/'.$u->slug : null,
-            'tautanTamu' => $u->sudahTerbit() && $u->slug ? url('/'.$u->slug) : null,
-            'status' => $u->sudahTerbit() ? 'terbit' : 'draf',
+            'tautanTamu' => $u->sudahTerbit() && $u->slug ? PesanUndangan::linkUndangan($u) : null,
+            'status' => $u->sudahTerbit() ? 'aktif' : 'draf',
             'tanggal' => $this->tanggal($u->tanggal_acara),
             'tamu' => $u->tamu_count,
-            'dilihat' => $u->tayangan_count,
+            'dilihat' => $dilihat($u->id),
             'hadir' => $u->hadir_count,
             'perubahan' => $u->sudahTerbit() && $u->ada_perubahan,
             'terbit' => $u->sudahTerbit() ? ($u->diterbitkan_at ? 'Terbit '.$this->waktuRelatif($u->diterbitkan_at) : 'Sudah terbit') : 'Belum diterbitkan',
             'utama' => $u->id === $utama->id,
         ])->all();
 
-        $kpi = [
-            ['label' => 'Undangan', 'nilai' => $semua->count(), 'delta' => $semua->filter(fn ($u) => $u->sudahTerbit())->count().' terbit', 'ikon' => 'beranda-undangan'],
-            ['label' => 'Total tamu', 'nilai' => $semua->sum('tamu_count'), 'delta' => '+'.Tamu::query()->whereIn('undangan_id', $ids)->where('created_at', '>=', $hariIni)->count().' hari ini', 'ikon' => 'beranda-tamu'],
-            ['label' => 'Konfirmasi hadir', 'nilai' => $semua->sum('hadir_count'), 'delta' => '+'.Rsvp::query()->whereIn('undangan_id', $ids)->where('status', Rsvp::HADIR)->where('created_at', '>=', $hariIni)->count().' hari ini', 'ikon' => 'rsvp'],
-            ['label' => 'Tayangan', 'nilai' => $semua->sum('tayangan_count'), 'delta' => '+'.Tayangan::query()->whereIn('undangan_id', $ids)->where('created_at', '>=', $hariIni)->count().' hari ini', 'ikon' => 'beranda-lihat'],
-        ];
-
-        $rsvpPerStatus = Rsvp::query()->where('undangan_id', $utama->id)->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
-        $hadir = (int) ($rsvpPerStatus[Rsvp::HADIR] ?? 0);
-        $tidak = (int) ($rsvpPerStatus[Rsvp::TIDAK] ?? 0);
+        $rsvpPerStatus = Rsvp::query()->where('undangan_id', $utama->id)
+            ->selectRaw('status, count(*) as n, sum(case when created_at >= ? then 1 else 0 end) as baru', [$kemarin])
+            ->groupBy('status')->get()->keyBy('status');
+        $hadir = (int) ($rsvpPerStatus[Rsvp::HADIR]->n ?? 0);
+        $tidak = (int) ($rsvpPerStatus[Rsvp::TIDAK]->n ?? 0);
+        $hadirBaru = (int) ($rsvpPerStatus[Rsvp::HADIR]->baru ?? 0);
         $tamu = $utama->tamu_count;
-        $terkirim = Tamu::query()->where('undangan_id', $utama->id)->whereNotNull('dikirim_at')->count();
+        $ringkasTamu = Tamu::query()->where('undangan_id', $utama->id)
+            ->selectRaw('sum(case when dikirim_at is not null then 1 else 0 end) as terkirim, sum(case when created_at >= ? then 1 else 0 end) as baru, sum(case when dikirim_at >= ? then 1 else 0 end) as terkirim_baru', [$kemarin, $kemarin])
+            ->first();
+        $terkirim = (int) ($ringkasTamu->terkirim ?? 0);
         $belum = max(0, $tamu - $hadir - $tidak);
 
-        $hero = $this->heroDari($utama, $daftar, $hadir, $tamu);
+        $stats = $this->statistik($tamu, (int) ($ringkasTamu->baru ?? 0), $terkirim, (int) ($ringkasTamu->terkirim_baru ?? 0), $dilihat($utama->id), (int) ($lihat[$utama->id]->baru ?? 0), $hadir, $hadirBaru);
 
-        $langkah = [
-            ['label' => 'Pilih tema', 'hint' => 'Tema dipilih di Edit Undangan', 'ok' => $utama->tema_id !== null],
-            ['label' => 'Isi data undangan', 'hint' => 'Nama mempelai, tanggal, lokasi', 'ok' => $utama->tanggal_acara !== null && $this->adaIsi($utama->id)],
-            ['label' => 'Tambah daftar tamu', 'hint' => 'Supaya tiap tamu punya tautan sendiri', 'ok' => $tamu > 0],
-            ['label' => 'Terbitkan undangan', 'hint' => 'Tautan siap dibagikan', 'ok' => $utama->sudahTerbit()],
+        $langkah = $this->langkah([
+            $utama->tema_id !== null,
+            $utama->tanggal_acara !== null && $this->adaIsi($utama->id),
+            $tamu > 0,
+            $utama->sudahTerbit(),
+        ], $utama->id);
+
+        $baris = collect($daftar)->firstWhere('id', $utama->id);
+        $hero = $baris + [
+            'tempat' => $utama->lokasi_ringkas ?: '–',
+            'hadirPersen' => $tamu > 0 ? (int) round($hadir / $tamu * 100) : 0,
+            'jumlahHadir' => $hadir,
+            'jumlahTamu' => $tamu,
+            'target' => $utama->tanggal_acara?->copy()->setTime(10, 0)->toIso8601String(),
+            'kosong' => false,
         ];
-        $selesai = collect($langkah)->where('ok', true)->count();
-        $berikut = collect($langkah)->search(fn ($l) => ! $l['ok']);
-        foreach ($langkah as $i => &$l) {
-            $l['no'] = $i + 1;
-            $l['href'] = $i === 2 ? $this->tautan('bagikan') : $this->tautan('edit-undangan', ['undangan' => $utama->id]);
-            $l['sekarang'] = $berikut === $i;
-        }
-        unset($l);
-
-        $totalRsvp = $hadir + $tidak + $belum;
-        $persen = fn (int $n) => $totalRsvp > 0 ? (int) round($n / $totalRsvp * 100) : 0;
 
         return [
+            'kosong' => false,
             'contoh' => false,
-            'daftar' => $daftar,
-            'hitung' => ['semua' => count($daftar), 'terbit' => collect($daftar)->where('status', 'terbit')->count(), 'draf' => collect($daftar)->where('status', 'draf')->count()],
+            'daftar' => $this->saring($daftar),
+            'hitung' => $this->hitung($daftar),
             'hero' => $hero,
-            'kpi' => $kpi,
-            'langkah' => ['tampil' => $selesai < 4, 'selesai' => $selesai, 'item' => $langkah],
+            'stats' => $stats,
+            'langkah' => $langkah,
             'kunjungan' => $this->kunjungan($utama->id),
-            'rsvp' => [
-                'terkirim' => $terkirim, 'pct' => $tamu > 0 ? (int) round($hadir / $tamu * 100) : 0,
-                'hadir' => $hadir, 'tidak' => $tidak, 'belum' => $belum,
-                'pHadir' => $persen($hadir), 'pTidak' => $persen($tidak), 'pBelum' => $persen($belum),
-                'donat' => $totalRsvp > 0
-                    ? 'conic-gradient(#16A34A 0 '.($hadir / $totalRsvp * 360).'deg, #EF4444 0 '.(($hadir + $tidak) / $totalRsvp * 360).'deg, #F59E0B 0 360deg)'
-                    : '#EEF0F3',
-            ],
+            'rsvp' => $this->ringkasRsvp($terkirim, $hadir, $tidak, $belum),
             'aktivitas' => $this->aktivitas($utama->id),
             'ucapan' => Ucapan::query()->where('undangan_id', $utama->id)->latest()->latest('id')->limit(2)->get()
                 ->map(fn ($u) => ['nama' => $u->nama, 'waktu' => $this->waktuRelatif($u->created_at), 'pesan' => $u->pesan])->all(),
         ];
+    }
+
+    /** Akun tanpa undangan: dashboard dengan semua angka nol dan blok onboarding di dalamnya. */
+    private function dataKosong(): array
+    {
+        return [
+            'kosong' => true,
+            'contoh' => false,
+            'daftar' => [],
+            'hitung' => ['semua' => 0, 'utama' => 0, 'aktif' => 0, 'draf' => 0],
+            'hero' => ['kosong' => true, 'id' => null, 'target' => null],
+            'stats' => $this->statistik(0, 0, 0, 0, 0, 0, 0, 0),
+            'langkah' => $this->langkah([false, false, false, false], null),
+            'kunjungan' => $this->kunjungan(null),
+            'rsvp' => $this->ringkasRsvp(0, 0, 0, 0),
+            'aktivitas' => [],
+            'ucapan' => [],
+        ];
+    }
+
+    /** @return list<array{label:string,nilai:int,delta:int,ikon:string}> */
+    private function statistik(int $tamu, int $tamuBaru, int $terkirim, int $terkirimBaru, int $dilihat, int $dilihatBaru, int $hadir, int $hadirBaru): array
+    {
+        return [
+            ['label' => 'Total Tamu', 'nilai' => $tamu, 'delta' => $tamuBaru, 'ikon' => 'beranda-tamu'],
+            ['label' => 'Terkirim', 'nilai' => $terkirim, 'delta' => $terkirimBaru, 'ikon' => 'beranda-undangan'],
+            ['label' => 'Dilihat', 'nilai' => $dilihat, 'delta' => $dilihatBaru, 'ikon' => 'beranda-lihat'],
+            ['label' => 'Konfirmasi Hadir', 'nilai' => $hadir, 'delta' => $hadirBaru, 'ikon' => 'beranda-hadir'],
+        ];
+    }
+
+    /**
+     * @param  list<bool>  $selesai
+     * @return array{tampil:bool,selesai:int,pct:int,item:list<array<string,mixed>>}
+     */
+    private function langkah(array $selesai, ?int $undanganId): array
+    {
+        $label = [
+            ['Pilih tema', 'Tema dipilih di Edit Undangan'],
+            ['Isi data undangan', 'Nama mempelai, tanggal, lokasi'],
+            ['Tambah daftar tamu', 'Supaya tiap tamu punya tautan sendiri'],
+            ['Terbitkan undangan', 'Tautan & QR siap dibagikan'],
+        ];
+        $berikut = collect($selesai)->search(fn ($ok) => ! $ok);
+        $jumlah = collect($selesai)->filter()->count();
+
+        $item = [];
+        foreach ($label as $i => [$nama, $hint]) {
+            $href = match (true) {
+                $undanganId === null => $this->tautan('buat-undangan'),
+                $i === 2 => $this->tautan('bagikan', ['undangan' => $undanganId]),
+                default => $this->tautan('edit-undangan', ['undangan' => $undanganId]),
+            };
+            $item[] = ['no' => $i + 1, 'label' => $nama, 'hint' => $hint, 'ok' => $selesai[$i], 'sekarang' => $berikut === $i, 'href' => $href];
+        }
+
+        return ['tampil' => $jumlah < 4, 'selesai' => $jumlah, 'pct' => (int) round($jumlah / 4 * 100), 'item' => $item];
+    }
+
+    /** @return array<string,mixed> */
+    private function ringkasRsvp(int $terkirim, int $hadir, int $tidak, int $belum): array
+    {
+        $total = $hadir + $tidak + $belum;
+        $persen = fn (int $n) => $total > 0 ? (int) round($n / $total * 100) : 0;
+
+        return [
+            'terkirim' => $terkirim,
+            'pct' => $terkirim > 0 ? min(100, (int) round($hadir / $terkirim * 100)) : 0,
+            'hadir' => $hadir, 'tidak' => $tidak, 'belum' => $belum,
+            'pHadir' => $persen($hadir), 'pTidak' => $persen($tidak), 'pBelum' => $persen($belum),
+            'donat' => $total > 0
+                ? 'conic-gradient(#16A34A 0 '.($hadir / $total * 360).'deg, #EF4444 0 '.(($hadir + $tidak) / $total * 360).'deg, #F59E0B 0 360deg)'
+                : '#EEF0F3',
+        ];
+    }
+
+    /**
+     * @param  array<int,array<string,mixed>>  $daftar
+     * @return array{semua:int,utama:int,aktif:int,draf:int}
+     */
+    private function hitung(array $daftar): array
+    {
+        $koleksi = collect($daftar);
+
+        return [
+            'semua' => $koleksi->count(),
+            'utama' => $koleksi->where('utama', true)->count(),
+            'aktif' => $koleksi->where('status', 'aktif')->count(),
+            'draf' => $koleksi->where('status', 'draf')->count(),
+        ];
+    }
+
+    /**
+     * Filter status + kolom cari. Pencarian nama tamu memakai satu kueri tambahan (rata, tidak tergantung jumlah data).
+     *
+     * @param  array<int,array<string,mixed>>  $daftar
+     * @return array<int,array<string,mixed>>
+     */
+    private function saring(array $daftar): array
+    {
+        $hasil = collect($daftar)->filter(fn ($u) => match ($this->filter) {
+            'utama' => $u['utama'],
+            'aktif' => $u['status'] === 'aktif',
+            'draf' => $u['status'] === 'draf',
+            default => true,
+        });
+
+        $kata = Str::of($this->cari)->squish()->limit(80, '')->lower()->toString();
+        if ($kata !== '') {
+            $pola = '%'.addcslashes($kata, '%_\\').'%';
+            $cocokTamu = Tamu::query()->whereIn('undangan_id', collect($daftar)->pluck('id'))
+                ->whereRaw('lower(nama) like ?', [$pola])->distinct()->pluck('undangan_id')->all();
+            $hasil = $hasil->filter(fn ($u) => in_array($u['id'], $cocokTamu, true)
+                || str_contains(mb_strtolower($u['judul'].' '.$u['slug'].' '.$u['jenis']), $kata));
+        }
+
+        return $hasil->values()->all();
     }
 
     private function adaIsi(int $undanganId): bool
@@ -261,29 +397,14 @@ class Beranda extends Component
     }
 
     /**
-     * @param  array<int,array<string,mixed>>  $daftar
-     * @return array<string,mixed>
+     * Tujuh hari berakhir hari ini (tertua di kiri), dibandingkan dengan tujuh hari sebelumnya.
+     *
+     * @return array{total:int,tren:string,naik:bool,bar:list<array{v:int,hari:string,h:int,puncak:bool}>}
      */
-    private function heroDari(Undangan $u, array $daftar, int $hadir, int $tamu): array
-    {
-        $baris = collect($daftar)->firstWhere('id', $u->id);
-        $jamAcara = $u->tanggal_acara?->copy()->setTime(9, 0);
-
-        return $baris + [
-            'tempat' => $u->lokasi_ringkas ?: '–',
-            'hadirPersen' => $tamu > 0 ? (int) round($hadir / $tamu * 100) : 0,
-            'jumlahHadir' => $hadir,
-            'jumlahTamu' => $tamu,
-            'target' => $jamAcara?->toIso8601String(),
-            'tanggalKosong' => $u->tanggal_acara === null,
-        ];
-    }
-
-    /** @return array{total:int,tren:string,naik:bool,bar:list<array{v:int,hari:string,h:int,puncak:bool}>} */
-    private function kunjungan(int $undanganId): array
+    private function kunjungan(?int $undanganId): array
     {
         $mulai = now()->startOfDay()->subDays(6);
-        $baris = Tayangan::query()->where('undangan_id', $undanganId)->where('created_at', '>=', $mulai)
+        $baris = $undanganId === null ? collect() : Tayangan::query()->where('undangan_id', $undanganId)->where('created_at', '>=', $mulai->copy()->subDays(7))
             ->selectRaw('date(created_at) as hari, count(*) as n')->groupBy('hari')->pluck('n', 'hari');
 
         $nilai = [];
@@ -294,8 +415,10 @@ class Beranda extends Component
 
         $total = array_sum(array_column($nilai, 'v'));
         $maks = max(1, ...array_column($nilai, 'v'));
-        $sebelumnya = Tayangan::query()->where('undangan_id', $undanganId)
-            ->where('created_at', '>=', $mulai->copy()->subDays(7))->where('created_at', '<', $mulai)->count();
+        $sebelumnya = 0;
+        for ($i = 1; $i <= 7; $i++) {
+            $sebelumnya += (int) ($baris[$mulai->copy()->subDays($i)->toDateString()] ?? 0);
+        }
 
         $tren = match (true) {
             $total === 0 => 'Belum ada kunjungan',
@@ -317,7 +440,7 @@ class Beranda extends Component
     /** @return list<array{ini:string,nama:string,info:string,jenis:string,waktu:string}> */
     private function aktivitas(int $undanganId): array
     {
-        $rsvp = Rsvp::query()->where('undangan_id', $undanganId)->latest()->latest('id')->limit(5)->get()->map(fn ($r) => [
+        $rsvp = Rsvp::query()->where('undangan_id', $undanganId)->latest()->latest('id')->limit(4)->get()->map(fn ($r) => [
             'at' => $r->created_at,
             'nama' => $r->nama,
             'info' => $r->status === Rsvp::HADIR ? 'Mengonfirmasi hadir · '.$r->jumlah.' orang' : 'Berhalangan hadir',
@@ -325,7 +448,7 @@ class Beranda extends Component
         ]);
 
         $tayangan = Tayangan::query()->where('undangan_id', $undanganId)->whereNotNull('tamu_id')
-            ->latest('created_at')->latest('id')->limit(5)->get();
+            ->latest('created_at')->latest('id')->limit(4)->get();
         $namaTamu = Tamu::query()->where('undangan_id', $undanganId)->whereIn('id', $tayangan->pluck('tamu_id'))->pluck('nama', 'id');
         $dilihat = $tayangan->filter(fn ($t) => isset($namaTamu[$t->tamu_id]))->map(fn ($t) => [
             'at' => $t->created_at,
@@ -334,7 +457,7 @@ class Beranda extends Component
             'jenis' => 'dilihat',
         ]);
 
-        return $rsvp->concat($dilihat)->sortByDesc('at')->take(5)->map(fn ($a) => [
+        return $rsvp->concat($dilihat)->sortByDesc('at')->take(4)->map(fn ($a) => [
             'ini' => $this->inisial($a['nama']),
             'nama' => $a['nama'],
             'info' => $a['info'],
@@ -343,47 +466,67 @@ class Beranda extends Component
         ])->values()->all();
     }
 
+    /**
+     * Data dialog Bagikan. Id berasal dari properti terkunci dan baris daftar milik pengguna; QR dibuat hanya untuk yang terbit.
+     *
+     * @param  array<string,mixed>|null  $baris
+     * @return array<string,mixed>|null
+     */
+    private function dataBagikan(?array $baris): ?array
+    {
+        if (! $baris) {
+            return null;
+        }
+
+        $url = $baris['tautanTamu'] ?? ($baris['slug'] ? route('undangan.publik', $baris['slug']) : null);
+        $terbit = $baris['status'] === 'aktif' && $url !== null;
+
+        return $baris + [
+            'url' => $url,
+            'terbit' => $terbit,
+            'qr' => $terbit ? KodeQr::svg($url, 96, '#10203A') : null,
+            'unduhQr' => $terbit ? KodeQr::dataUri($url, 512) : null,
+            'wa' => $url ? PesanUndangan::urlWa(null, 'Kami mengundang Anda ke '.$baris['judul'].'. Buka undangannya di sini: '.$url) : null,
+        ];
+    }
+
     /** Data ilustrasi untuk akun yang belum punya undangan; tidak disimpan dan tidak bisa diubah. */
     private function dataContoh(): array
     {
-        $baris = fn (string $judul, string $status, int $tamu, int $dilihat, int $hadir, bool $utama) => [
-            'id' => null, 'judul' => $judul, 'mono' => $this->monogram($judul), 'jenis' => 'Pernikahan', 'slug' => Str::slug($judul),
+        $baris = fn (string $judul, string $jenis, string $status, string $tgl, int $tamu, int $dilihat, int $hadir, bool $utama) => [
+            'id' => null, 'judul' => $judul, 'mono' => $this->monogram($judul), 'jenis' => $jenis, 'slug' => Str::slug($judul),
             'link' => $this->hostPublik().'/'.Str::slug($judul), 'tautanTamu' => null, 'status' => $status,
-            'tanggal' => $status === 'terbit' ? '14 Des 2026' : '–', 'tamu' => $tamu, 'dilihat' => $dilihat, 'hadir' => $hadir,
-            'perubahan' => false, 'terbit' => $status === 'terbit' ? 'Terbit 3 hari lalu' : 'Belum diterbitkan', 'utama' => $utama,
+            'tanggal' => $tgl, 'tamu' => $tamu, 'dilihat' => $dilihat, 'hadir' => $hadir,
+            'perubahan' => false, 'terbit' => $status === 'aktif' ? 'Sudah terbit' : 'Belum diterbitkan', 'utama' => $utama,
         ];
-        $daftar = [$baris('Raka & Sinta', 'terbit', 120, 342, 68, true), $baris('Dimas & Laras', 'draf', 0, 0, 0, false)];
+        $daftar = [$baris('Raka & Sinta', 'Pernikahan', 'aktif', '14 Feb 2027', 250, 168, 124, true), $baris('Ulang Tahun Nara', 'Ulang Tahun', 'draf', '21 Nov 2026', 60, 0, 0, false)];
 
         return [
+            'kosong' => false,
             'contoh' => true,
-            'daftar' => $daftar,
-            'hitung' => ['semua' => 2, 'terbit' => 1, 'draf' => 1],
+            'daftar' => $this->saring($daftar),
+            'hitung' => $this->hitung($daftar),
             'hero' => $daftar[0] + [
-                'tempat' => 'Gedung Sasana Kriya, Jakarta', 'hadirPersen' => 57, 'jumlahHadir' => 68, 'jumlahTamu' => 120,
-                'target' => now()->addDays(68)->setTime(9, 0)->toIso8601String(), 'tanggalKosong' => false,
+                'tempat' => 'Grand Ballroom, Jakarta', 'hadirPersen' => 50, 'jumlahHadir' => 124, 'jumlahTamu' => 250,
+                'target' => now()->addDays(134)->setTime(10, 0)->toIso8601String(), 'kosong' => false,
             ],
-            'kpi' => [
-                ['label' => 'Undangan', 'nilai' => 2, 'delta' => '1 terbit', 'ikon' => 'beranda-undangan'],
-                ['label' => 'Total tamu', 'nilai' => 120, 'delta' => '+4 hari ini', 'ikon' => 'beranda-tamu'],
-                ['label' => 'Konfirmasi hadir', 'nilai' => 68, 'delta' => '+6 hari ini', 'ikon' => 'rsvp'],
-                ['label' => 'Tayangan', 'nilai' => 342, 'delta' => '+31 hari ini', 'ikon' => 'beranda-lihat'],
-            ],
-            'langkah' => ['tampil' => false, 'selesai' => 4, 'item' => []],
+            'stats' => $this->statistik(250, 5, 212, 18, 168, 24, 124, 9),
+            'langkah' => ['tampil' => false, 'selesai' => 4, 'pct' => 100, 'item' => []],
             'kunjungan' => [
-                'total' => 259, 'tren' => '+18% dari minggu lalu', 'naik' => true,
-                'bar' => collect([18, 31, 27, 52, 44, 61, 26])->map(fn ($v, $i) => [
-                    'v' => $v, 'hari' => ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][$i], 'h' => (int) round($v / 61 * 140), 'puncak' => $v === 61,
+                'total' => 482, 'tren' => '+18% dari minggu lalu', 'naik' => true,
+                'bar' => collect([48, 64, 57, 79, 112, 74, 48])->map(fn ($v, $i) => [
+                    'v' => $v, 'hari' => self::HARI[$i], 'h' => (int) round($v / 112 * 140), 'puncak' => $v === 112,
                 ])->all(),
             ],
-            'rsvp' => ['terkirim' => 98, 'pct' => 57, 'hadir' => 68, 'tidak' => 12, 'belum' => 40, 'pHadir' => 57, 'pTidak' => 10, 'pBelum' => 33,
-                'donat' => 'conic-gradient(#16A34A 0 204deg, #EF4444 0 240deg, #F59E0B 0 360deg)'],
+            'rsvp' => $this->ringkasRsvp(212, 124, 22, 66),
             'aktivitas' => [
                 ['ini' => 'BS', 'nama' => 'Budi Santoso', 'info' => 'Mengonfirmasi hadir · 2 orang', 'jenis' => 'hadir', 'waktu' => '5 mnt lalu'],
                 ['ini' => 'KW', 'nama' => 'Keluarga Wijaya', 'info' => 'Membuka undangan', 'jenis' => 'dilihat', 'waktu' => '18 mnt lalu'],
                 ['ini' => 'AL', 'nama' => 'Ayu Lestari', 'info' => 'Berhalangan hadir', 'jenis' => 'tidak', 'waktu' => '1 jam lalu'],
+                ['ini' => 'DP', 'nama' => 'Dimas Pratama', 'info' => 'Terkirim via WhatsApp', 'jenis' => 'belum', 'waktu' => '2 jam lalu'],
             ],
             'ucapan' => [
-                ['nama' => 'Nadia & Keluarga', 'waktu' => 'Hari ini', 'pesan' => 'Selamat menempuh hidup baru! Semoga selalu bahagia dan dimudahkan dalam segala hal.'],
+                ['nama' => 'Nadia & Keluarga', 'waktu' => 'Hari ini, 09.12', 'pesan' => 'Selamat menempuh hidup baru, Raka & Sinta! Semoga selalu bahagia dan dimudahkan dalam segala hal.'],
                 ['nama' => 'Om Hendra', 'waktu' => 'Kemarin', 'pesan' => 'Selamat ya! Kami sekeluarga pasti hadir. Semoga lancar sampai hari H.'],
             ],
         ];
@@ -394,16 +537,22 @@ class Beranda extends Component
         return parse_url(url('/'), PHP_URL_HOST) ?: 'undangyah.com';
     }
 
+    /** "Raka & Sinta" -> "R&S" (papan); judul lain -> dua huruf pertama. */
     private function monogram(string $judul): string
     {
-        $kata = preg_split('/[\s&]+/u', trim($judul), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $judul = trim($judul);
+        if (preg_match('/^(\S+)\s*[&+]\s*(\S+)/u', $judul, $m)) {
+            return mb_strtoupper(mb_substr($m[1], 0, 1).'&'.mb_substr($m[2], 0, 1));
+        }
 
-        return mb_strtoupper(collect($kata)->map(fn ($k) => mb_substr($k, 0, 1))->take(2)->implode(''));
+        return mb_strtoupper(mb_substr($judul, 0, 2));
     }
 
     private function inisial(string $nama): string
     {
-        return $this->monogram($nama) ?: '?';
+        $kata = preg_split('/[\s&]+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return mb_strtoupper(collect($kata)->map(fn ($k) => mb_substr($k, 0, 1))->take(2)->implode('')) ?: '?';
     }
 
     private function tanggal(?Carbon $t): string
@@ -416,7 +565,6 @@ class Beranda extends Component
         $detik = max(0, (int) $t->diffInSeconds(now(), false));
 
         return match (true) {
-            $detik >= 7 * 86400 => $this->tanggal($t),
             $detik < 60 => 'baru saja',
             $detik < 3600 => intdiv($detik, 60).' mnt lalu',
             $detik < 86400 => intdiv($detik, 3600).' jam lalu',

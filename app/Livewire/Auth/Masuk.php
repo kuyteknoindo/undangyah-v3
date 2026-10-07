@@ -17,6 +17,9 @@ class Masuk extends Component
 
     public string $info = '';
 
+    /** Galat tampil setelah percobaan kirim pertama, lalu diperbarui tiap kolom berubah (seperti papan). */
+    public bool $dicoba = false;
+
     private const MAKS_PER_AKUN = 5;
 
     private const MAKS_PER_IP = 20;
@@ -26,11 +29,9 @@ class Masuk extends Component
     public function masuk(): void
     {
         $this->info = '';
+        $this->dicoba = true;
         $this->email = mb_strtolower(trim($this->email));
-        $this->validate(
-            ['email' => ['required', 'email:rfc'], 'sandi' => ['required']],
-            ['sandi.required' => 'Kata sandi wajib diisi.'],
-        );
+        $this->validate($this->aturan(), $this->pesan());
 
         $email = $this->email;
         $ip = (string) request()->ip();
@@ -65,6 +66,30 @@ class Masuk extends Component
         session()->regenerate();
 
         $this->redirectIntended(route('beranda'));
+    }
+
+    /** @return array<string, list<string>> */
+    private function aturan(): array
+    {
+        return ['email' => ['required', 'email:rfc'], 'sandi' => ['required', 'min:6']];
+    }
+
+    /** @return array<string, string> */
+    private function pesan(): array
+    {
+        return [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email belum benar.',
+            'sandi.required' => 'Kata sandi wajib diisi.',
+            'sandi.min' => 'Kata sandi minimal 6 karakter.',
+        ];
+    }
+
+    public function updated(string $nama): void
+    {
+        if ($this->dicoba && in_array($nama, ['email', 'sandi'], true)) {
+            $this->validateOnly($nama, $this->aturan(), $this->pesan());
+        }
     }
 
     public function segera(string $penyedia): void

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Pesan pengguna ke layanan pelanggan. Balasan admin belum ada (tertunda); status diubah admin lewat database. */
 class TiketBantuan extends Model
@@ -35,6 +36,11 @@ class TiketBantuan extends Model
     public function undangan(): BelongsTo
     {
         return $this->belongsTo(Undangan::class);
+    }
+
+    public function lampiran(): HasMany
+    {
+        return $this->hasMany(TiketLampiran::class);
     }
 
     public function labelKategori(): string

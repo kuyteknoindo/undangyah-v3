@@ -1,79 +1,78 @@
-<div class="mx-auto flex max-w-6xl flex-col gap-5">
-    <section aria-label="Cari bantuan" class="relative overflow-hidden rounded-2xl bg-brand px-5 py-8 text-white sm:px-8 sm:py-10">
-        <div aria-hidden="true" class="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-white/10"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute -bottom-20 left-1/3 size-48 rounded-full bg-white/5"></div>
-        <div class="relative flex max-w-2xl flex-col gap-4">
-            <div>
-                <h2 class="m-0 text-2xl leading-8 font-bold tracking-tight">Ada yang bisa kami bantu?</h2>
-                <p class="mt-1 mb-0 text-sm leading-6 text-white/85">Cari jawaban dari pertanyaan yang paling sering ditanyakan, atau pilih kategori di bawah.</p>
-            </div>
-            <div class="relative">
-                <span class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"><x-ikon nama="bantuan-cari" :ukuran="18" /></span>
-                <label for="hp-cari" class="sr-only">Cari pertanyaan</label>
-                <input id="hp-cari" type="search" wire:model.live.debounce.300ms="cari" maxlength="120" autocomplete="off" placeholder="Cari pertanyaan..."
-                       class="inp !min-h-12 !rounded-xl !pr-11 !pl-10">
-                @if ($cari !== '')
-                    <button type="button" wire:click="aturUlang" aria-label="Hapus pencarian" class="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:bg-gray-100"><x-ikon nama="tutup" :ukuran="16" /></button>
-                @endif
-            </div>
+<div class="bl-root" style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+    <x-billing.gaya />
+    <section aria-label="Cari bantuan" style="position:relative;overflow:hidden;box-sizing:border-box;background:#E3ECFD;border:2px solid #BFD3FF;border-radius:24px;padding:36px 40px;display:flex;flex-direction:column;gap:18px" class="bh-hero">
+        <div aria-hidden="true" style="position:absolute;top:-110px;right:-70px;width:300px;height:300px;border-radius:150px;border:2px solid #BFD3FF"></div>
+        <div aria-hidden="true" style="position:absolute;top:-60px;right:-20px;width:190px;height:190px;border-radius:95px;border:2px solid #BFD3FF"></div>
+        <div style="position:relative;display:flex;flex-direction:column;gap:6px;max-width:760px">
+            <h2 style="margin:0;font-family:ui-serif,'New York',Georgia,serif;font-weight:600;font-size:32px;line-height:38px;color:#1A3FA8">Ada yang bisa kami bantu?</h2>
+            <div style="font-size:15px;line-height:22px;font-weight:500;color:#454B55">Cari jawaban dari pertanyaan yang paling sering ditanyakan, atau pilih kategori di bawah.</div>
+        </div>
+        <div class="bl-fld" style="position:relative;max-width:640px;display:flex;align-items:center;gap:10px;min-height:56px;padding:0 6px 0 18px;box-sizing:border-box;background:#FFFFFF;border:2px solid #BFD3FF;border-radius:18px">
+            <span aria-hidden="true" style="flex:none;display:flex;color:#666C76"><x-ikon nama="bantuan-cari" :ukuran="20" /></span>
+            <label for="hp-cari" class="sr-only">Cari pertanyaan</label>
+            <input id="hp-cari" type="text" autocomplete="off" maxlength="120" placeholder="Cari pertanyaan..." wire:model.live.debounce.300ms="cari" style="flex:1;min-width:0;height:48px;border:0;background:transparent;font-size:16px;line-height:22px;outline:none;box-shadow:none">
+            @if ($cari !== '')
+                <button type="button" wire:click="aturUlang" aria-label="Hapus pencarian" style="flex:none;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:#666C76"><x-ikon nama="tutup" :ukuran="18" style="stroke-width:2.5" /></button>
+            @endif
         </div>
     </section>
 
-    <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="flex min-w-0 flex-col gap-4">
-            <section aria-label="Kategori bantuan" class="flex flex-wrap gap-2">
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+        <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:16px">
+            <section aria-label="Kategori bantuan" style="display:flex;flex-wrap:wrap;gap:8px">
                 @foreach (['semua' => 'Semua'] + \App\Models\BantuanArtikel::KATEGORI as $kunci => $label)
-                    @php
-$aktif = $kategoriAktif === $kunci;
-@endphp
+                    @php $aktif = $kategoriAktif === $kunci; @endphp
                     <button type="button" wire:click="pilihKategori('{{ $kunci }}')" aria-pressed="{{ $aktif ? 'true' : 'false' }}" aria-label="{{ $label }}, {{ $jumlah[$kunci] }} pertanyaan"
-                            class="inline-flex min-h-11 items-center gap-2.5 rounded-full border-2 py-0 pr-2.5 pl-4 text-sm leading-[19px] font-bold {{ $aktif ? 'border-brand bg-brand-100 text-brand' : 'border-line bg-white text-ink hover:bg-gray-50' }}">
+                            style="box-sizing:border-box;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 10px 0 16px;border-radius:999px;font-size:14px;line-height:19px;font-weight:700;border:2px solid {{ $aktif ? '#1D4ED8' : '#E2E5E9' }};background:{{ $aktif ? '#E3ECFD' : '#FFFFFF' }};color:{{ $aktif ? '#1D4ED8' : '#262A31' }}">
                         <span>{{ $label }}</span>
-                        <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-xl px-1.5 text-xs leading-4 font-bold {{ $aktif ? 'bg-brand text-white' : 'bg-canvas text-nav' }}">{{ $jumlah[$kunci] }}</span>
+                        <span aria-hidden="true" style="min-width:24px;height:24px;padding:0 7px;box-sizing:border-box;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:16px;font-weight:700;background:{{ $aktif ? '#1D4ED8' : '#F4F5F7' }};color:{{ $aktif ? '#FFFFFF' : '#454B55' }}">{{ $jumlah[$kunci] }}</span>
                     </button>
                 @endforeach
             </section>
 
-            <div role="status" class="text-[13px] leading-[18px] text-muted">{{ $ringkasan }}</div>
+            <div role="status" style="font-size:13px;line-height:18px;font-weight:600;color:#666C76">{{ $ringkasan }}</div>
 
             @if ($artikel->isEmpty())
-                <div class="kartu p-6">
-                    <x-kosong judul="Jawaban belum ditemukan" teks="Coba kata kunci lain, atau pilih kategori yang berbeda. Kalau masih belum ketemu, tim kami siap membantu." ikon="bantuan-cari">
-                        <button type="button" wire:click="aturUlang" class="btn btn-secondary">Reset pencarian</button>
-                        @if ($tautanHubungi)<a href="{{ $tautanHubungi }}" wire:navigate class="btn btn-primary">Hubungi kami</a>@endif
-                    </x-kosong>
+                <div class="bl-card" role="status" style="padding:36px 28px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+                    <span aria-hidden="true" style="width:72px;height:72px;border-radius:36px;background:#E3ECFD;color:#1D4ED8;display:flex;align-items:center;justify-content:center"><x-ikon nama="bantuan-cari" :ukuran="30" style="stroke-width:1.75" /></span>
+                    <div style="font-size:18px;line-height:24px;font-weight:700">Jawaban belum ditemukan</div>
+                    <div style="max-width:420px;font-size:14px;line-height:21px;font-weight:500;color:#666C76">Coba kata kunci lain, atau pilih kategori yang berbeda. Kalau masih belum ketemu, tim kami siap membantu.</div>
+                    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:8px">
+                        <button type="button" wire:click="aturUlang" class="bl-btn bl-btn-s">Reset pencarian</button>
+                        @if ($tautanHubungi)<a href="{{ $tautanHubungi }}" wire:navigate class="bl-btn bl-btn-p">Hubungi kami</a>@endif
+                    </div>
                 </div>
             @else
-                <section aria-label="Pertanyaan umum" class="flex flex-col gap-2.5">
+                <section aria-label="Pertanyaan umum" style="display:flex;flex-direction:column;gap:12px">
                     @foreach ($artikel as $a)
                         @php
                             $buka = $terbuka === $a->id;
                             $pilihan = $suara->has($a->id) ? ($suara[$a->id] ? 'ya' : 'tidak') : null;
                             $href = $tautan($a);
                         @endphp
-                        <div wire:key="artikel-{{ $a->id }}" class="kartu overflow-hidden {{ $buka ? '!border-[#BFD3FF]' : '' }}">
-                            <h3 class="m-0">
+                        <div wire:key="artikel-{{ $a->id }}" class="bl-card" style="overflow:hidden{{ $buka ? ';border-color:#BFD3FF' : '' }}">
+                            <h3 style="margin:0">
                                 <button type="button" wire:click="ubahBuka({{ $a->id }}, {{ $buka ? 'true' : 'false' }})" aria-expanded="{{ $buka ? 'true' : 'false' }}" aria-controls="jawab-{{ $a->id }}"
-                                        class="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-3 text-left text-[15px] leading-[22px] font-semibold text-ink hover:bg-gray-50">
-                                    <span>{{ $a->judul }}</span>
-                                    <span class="flex shrink-0 text-muted transition-transform duration-200 {{ $buka ? 'rotate-180' : '' }}"><x-ikon nama="panah-bawah" :ukuran="18" /></span>
+                                        style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:16px;min-height:64px;padding:12px 22px;border-radius:22px;font-size:16px;line-height:22px;font-weight:700">
+                                    <span style="flex:1;min-width:0">{{ $a->judul }}</span>
+                                    <span aria-hidden="true" style="flex:none;display:flex;color:#666C76;transition:transform 220ms;transform:{{ $buka ? 'rotate(180deg)' : 'none' }}"><x-ikon nama="panah-bawah" :ukuran="20" style="stroke-width:2.25" /></span>
                                 </button>
                             </h3>
                             @if ($buka)
-                                <div id="jawab-{{ $a->id }}" class="flex flex-col gap-3 border-t border-line px-5 py-4">
-                                    <div class="flex flex-col gap-2 text-sm leading-6 text-body">{{ \App\Support\TeksBantuan::html($a->isi) }}</div>
+                                <div id="jawab-{{ $a->id }}" style="padding:0 22px 20px;display:flex;flex-direction:column;gap:12px">
+                                    <div style="font-size:14px;line-height:22px;font-weight:500;color:#454B55;display:flex;flex-direction:column;gap:8px">{{ \App\Support\TeksBantuan::html($a->isi) }}</div>
                                     @if ($href)
-                                        <div><a href="{{ $href }}" wire:navigate class="inline-flex min-h-6 items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline">{{ $a->rute_label ?: 'Buka halaman' }} <x-ikon nama="panah-kanan" :ukuran="14" /></a></div>
+                                        <div><a href="{{ $href }}" wire:navigate style="min-height:44px;display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:18px;font-weight:700;color:#1D4ED8">{{ $a->rute_label ?: 'Buka halaman' }} <x-ikon nama="panah-kanan" :ukuran="16" style="stroke-width:2.5" /></a></div>
                                     @endif
-                                    <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                                    <div style="border-top:2px solid #E2E5E9;padding-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px">
                                         @if ($pilihan === null)
-                                            <span class="mr-1 text-[13px] text-muted">Apakah ini membantu?</span>
-                                            <button type="button" wire:click="suara({{ $a->id }}, 'ya')" class="btn btn-secondary btn-sm">Ya</button>
-                                            <button type="button" wire:click="suara({{ $a->id }}, 'tidak')" class="btn btn-secondary btn-sm">Tidak</button>
+                                            <span style="font-size:13px;line-height:18px;font-weight:700;margin-right:4px">Apakah ini membantu?</span>
+                                            <button type="button" wire:click="suara({{ $a->id }}, 'ya')" class="bl-btn bl-btn-s" style="min-height:40px;padding:0 16px">Ya</button>
+                                            <button type="button" wire:click="suara({{ $a->id }}, 'tidak')" class="bl-btn bl-btn-s" style="min-height:40px;padding:0 16px">Tidak</button>
                                         @else
-                                            <span role="status" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink"><x-ikon nama="bantuan-centang" :ukuran="16" class="text-[#58A700]" />{{ $pilihan === 'ya' ? 'Terima kasih, senang bisa membantu.' : 'Terima kasih masukannya.' }}</span>
-                                            @if ($pilihan === 'tidak' && $tautanHubungi)<a href="{{ $tautanHubungi }}" wire:navigate class="btn btn-primary btn-sm">Hubungi layanan</a>@endif
-                                            <button type="button" wire:click="suara({{ $a->id }}, 'batal')" class="btn btn-ghost btn-sm">Ubah jawaban</button>
+                                            <span role="status" style="display:inline-flex;align-items:center;gap:8px;font-size:13px;line-height:18px;font-weight:700;color:#3C7A00"><x-ikon nama="centang" :ukuran="16" style="stroke-width:3" />{{ $pilihan === 'ya' ? 'Terima kasih, senang bisa membantu.' : 'Terima kasih masukannya.' }}</span>
+                                            @if ($pilihan === 'tidak' && $tautanHubungi)<a href="{{ $tautanHubungi }}" wire:navigate style="min-height:44px;display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:18px;font-weight:700;color:#1D4ED8">Hubungi layanan</a>@endif
+                                            <button type="button" wire:click="suara({{ $a->id }}, 'batal')" style="min-height:44px;padding:0 6px;font-size:12px;line-height:16px;font-weight:700;color:#666C76;text-decoration:underline">Ubah jawaban</button>
                                         @endif
                                     </div>
                                 </div>
@@ -84,13 +83,13 @@ $aktif = $kategoriAktif === $kunci;
             @endif
         </div>
 
-        <aside aria-label="Butuh bantuan lain" class="flex flex-col gap-3">
+        <aside aria-label="Butuh bantuan lain" style="flex:0 1 320px;min-width:0;position:sticky;top:24px;display:flex;flex-direction:column;gap:16px">
             <x-bantuan-kontak :kontak="$kontak" :hubungi="$tautanHubungi" />
             @if ($tautanSyarat)
-                <a href="{{ $tautanSyarat }}" wire:navigate class="kartu flex min-h-14 items-center gap-3 p-3.5 transition hover:bg-gray-50">
-                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-canvas text-nav"><x-ikon nama="bantuan-dokumen" :ukuran="18" /></span>
-                    <span class="flex-1 text-sm font-semibold text-ink">Syarat &amp; Privasi</span>
-                    <x-ikon nama="panah-kanan" :ukuran="16" class="text-subtle" />
+                <a href="{{ $tautanSyarat }}" wire:navigate class="bl-card bl-rowh" style="padding:16px 20px;display:flex;align-items:center;gap:12px;min-height:44px">
+                    <span aria-hidden="true" style="flex:none;width:36px;height:36px;border-radius:18px;background:#F4F5F7;display:flex;align-items:center;justify-content:center;color:#454B55"><x-ikon nama="bantuan-dokumen" :ukuran="18" /></span>
+                    <span style="flex:1;min-width:0;font-size:14px;line-height:19px;font-weight:700">Syarat &amp; Privasi</span>
+                    <span aria-hidden="true" style="flex:none;display:flex;color:#AEB3BB"><x-ikon nama="panah-kanan" :ukuran="18" /></span>
                 </a>
             @endif
         </aside>

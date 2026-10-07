@@ -1,0 +1,103 @@
+/* HASIL EKSTRAKSI (scripts/tema-ekstrak.mjs) dari <style> papan UndanganTamu.dc.html; semua aturan dilingkup ke .tema-akar. Jangan disunting manual. */
+.tema-akar{margin:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,sans-serif;color:#262A31;background:#F4F5F7}
+.tema-akar{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.tema-akar button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+.tema-akar a{color:inherit;text-decoration:none}
+.tema-akar input,.tema-akar textarea{font:inherit}
+.tema-akar button,.tema-akar a[href]{transition:transform 120ms cubic-bezier(.22,1,.36,1),box-shadow 120ms,background-color 120ms,filter 120ms,opacity 120ms}
+@media (hover:hover){.tema-akar button:not(:disabled):hover,.tema-akar a[href]:hover{filter:brightness(1.04)}
+.tema-akar .lrow:hover{background:#F4F5F7}
+.tema-akar .wtile:hover{border-color:#93B4FF;background:#F4F8FF}
+.tema-akar .atile:hover{border-color:#93B4FF}}
+.tema-akar button:not(:disabled):active,.tema-akar a[href]:active{transform:scale(.97)}
+.tema-akar [style*="0 4px 0 #"]:not(:disabled):active{transform:translateY(4px)!important;box-shadow:0 0 0 0 transparent!important}
+.tema-akar button:disabled{opacity:.4;cursor:not-allowed}
+.tema-akar button:focus-visible,.tema-akar a:focus-visible{outline:3px solid #BFD3FF;outline-offset:2px}
+.tema-akar .pf{width:100%;box-sizing:border-box;height:38px;border-radius:10px;border:2px solid #E2E5E9;background:#F4F5F7;padding:0 10px;font-size:13px;line-height:18px;font-weight:500;color:#262A31;transition:border-color 120ms,background-color 120ms}
+.tema-akar .pf:focus{border-color:#1D4ED8;background:#FFFFFF;outline:none}
+.tema-akar textarea.pf{height:auto;padding:8px 10px;resize:vertical;line-height:19px}
+.tema-akar input[type="range"]{accent-color:#1D4ED8;width:100%;margin:2px 0}
+.tema-akar .scr{scrollbar-width:thin}
+.tema-akar .canvasbg{background-color:#E9ECF1;background-image:radial-gradient(#CBD0D8 1.2px,transparent 1.2px);background-size:22px 22px}
+.tema-akar .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tema-akar .tcb>.tcho{position:absolute;inset:0;border:1.5px dashed rgba(29,78,216,.6);border-radius:2px;pointer-events:none;opacity:0;z-index:30}
+.tema-akar .tcb:hover>.tcho{opacity:1}
+.tema-akar .tcb:has(.tcb:hover)>.tcho{opacity:0}
+.tema-akar .tcpv .tcho,.tema-akar .tcpv .tcempty{display:none}
+.tema-akar .tcbt{flex:none;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#FFFFFF}
+.tema-akar .tcbt:hover{background:rgba(255,255,255,.22)}
+.tema-akar .tcfl::first-line{font-size:var(--fs,22px);font-weight:700;line-height:1.2}
+.tema-akar .tcb img{-webkit-user-drag:none}
+.tema-akar .tcdc::first-letter{float:left;font-size:3.4em;line-height:.82;padding:4px 8px 0 0;font-weight:700;color:var(--dcc,inherit)}
+.tema-akar .wtile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:78px;padding:10px 6px;border-radius:14px;border:2px solid #E2E5E9;background:#FFFFFF;box-sizing:border-box;cursor:grab;touch-action:none;color:#262A31;font-size:12px;line-height:15px;font-weight:600;text-align:center;user-select:none}
+.tema-akar .wtile:active{cursor:grabbing}
+.tema-akar .atile{position:relative;border-radius:14px;border:2px solid #E2E5E9;background:#FFFFFF;box-sizing:border-box;cursor:grab;touch-action:none;padding:6px;user-select:none}
+.tema-akar .tchv-lift{transition:transform .25s ease,box-shadow .25s ease}
+.tema-akar .tchv-lift:hover{transform:translateY(-6px);box-shadow:0 14px 28px rgba(20,30,50,.22)}
+.tema-akar .tchv-grow{transition:transform .25s ease}
+.tema-akar .tchv-grow:hover{transform:scale(1.05)}
+.tema-akar .tchv-glow{transition:box-shadow .25s ease}
+.tema-akar .tchv-glow:hover{box-shadow:0 0 0 3px rgba(201,154,59,.35),0 0 28px rgba(201,154,59,.55)}
+.tema-akar .tchv-tilt{transition:transform .25s ease}
+.tema-akar .tchv-tilt:hover{transform:rotate(-2.5deg)}
+@keyframes tcmq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes tcpop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes tcss2{0%{opacity:0}6%{opacity:1}50.0%{opacity:1}56.0%{opacity:0}100%{opacity:0}}
+@keyframes tcss3{0%{opacity:0}6%{opacity:1}33.33%{opacity:1}39.33%{opacity:0}100%{opacity:0}}
+@keyframes tcss4{0%{opacity:0}6%{opacity:1}25.0%{opacity:1}31.0%{opacity:0}100%{opacity:0}}
+@media (max-width:1180px){.tema-akar .tc-l{width:292px!important}
+.tema-akar .tc-r{width:230px!important}}
+@keyframes tcin-fade-a{0%{opacity:0}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-fade-b{0%{opacity:0}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-up-s-a{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-up-s-b{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-down-s-a{0%{opacity:0;transform:translateY(-16px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-down-s-b{0%{opacity:0;transform:translateY(-16px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-up-a{0%{opacity:0;transform:translateY(60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-up-b{0%{opacity:0;transform:translateY(60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-down-a{0%{opacity:0;transform:translateY(-60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-down-b{0%{opacity:0;transform:translateY(-60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-left-a{0%{opacity:0;transform:translateX(-60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-left-b{0%{opacity:0;transform:translateX(-60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-right-a{0%{opacity:0;transform:translateX(60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-right-b{0%{opacity:0;transform:translateX(60px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-zin-a{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-zin-b{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-zout-a{0%{opacity:0;transform:scale(1.4)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-zout-b{0%{opacity:0;transform:scale(1.4)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-flipx-a{0%{opacity:0;transform:perspective(600px) rotateX(90deg)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-flipx-b{0%{opacity:0;transform:perspective(600px) rotateX(90deg)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-flipy-a{0%{opacity:0;transform:perspective(600px) rotateY(90deg)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-flipy-b{0%{opacity:0;transform:perspective(600px) rotateY(90deg)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-rot-a{0%{opacity:0;transform:rotate(-90deg) scale(.8)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-rot-b{0%{opacity:0;transform:rotate(-90deg) scale(.8)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-elegant-a{0%{opacity:0;transform:translateY(28px) scale(.98);filter:blur(6px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-elegant-b{0%{opacity:0;transform:translateY(28px) scale(.98);filter:blur(6px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-soft-a{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-soft-b{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-blur-a{0%{opacity:0;filter:blur(12px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-blur-b{0%{opacity:0;filter:blur(12px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes tcin-bounce-a{0%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.06)}70%{transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
+@keyframes tcin-bounce-b{0%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.06)}70%{transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
+@keyframes tcin-swing-a{0%{opacity:0;transform:rotate(-14deg)}30%{opacity:1;transform:rotate(9deg)}55%{transform:rotate(-5deg)}80%{transform:rotate(2deg)}100%{opacity:1;transform:none}}
+@keyframes tcin-swing-b{0%{opacity:0;transform:rotate(-14deg)}30%{opacity:1;transform:rotate(9deg)}55%{transform:rotate(-5deg)}80%{transform:rotate(2deg)}100%{opacity:1;transform:none}}
+@keyframes tcl-spin-a{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes tcl-spin-b{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes tcl-spin-r-a{0%{transform:rotate(0)}100%{transform:rotate(-360deg)}}
+@keyframes tcl-spin-r-b{0%{transform:rotate(0)}100%{transform:rotate(-360deg)}}
+@keyframes tcl-float-a{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes tcl-float-b{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes tcl-float-r-a{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+@keyframes tcl-float-r-b{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+@keyframes tcl-float-h-a{0%,100%{transform:translateX(0)}50%{transform:translateX(12px)}}
+@keyframes tcl-float-h-b{0%,100%{transform:translateX(0)}50%{transform:translateX(12px)}}
+@keyframes tcl-pulse-a{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes tcl-pulse-b{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes tcl-sway-a{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes tcl-sway-b{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes tcl-sway-r-a{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-4deg)}}
+@keyframes tcl-sway-r-b{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-4deg)}}
+@keyframes tcl-bounce-a{0%,100%{transform:translateY(0)}40%{transform:translateY(-16px)}60%{transform:translateY(-6px)}}
+@keyframes tcl-bounce-b{0%,100%{transform:translateY(0)}40%{transform:translateY(-16px)}60%{transform:translateY(-6px)}}
+.tema-akar .udsk{display:block;background:linear-gradient(90deg,#ECEEF1 0%,#F5F6F8 40%,#ECEEF1 80%);background-size:300% 100%;animation:udsk-sh 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes udsk-sh{0%{background-position:100% 0}100%{background-position:0 0}}

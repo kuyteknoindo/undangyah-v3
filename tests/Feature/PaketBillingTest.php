@@ -55,7 +55,7 @@ class PaketBillingTest extends TestCase
             ->assertSee('Paket Gratis')->assertSee('1 / 1')->assertSee('Kuota penuh')
             ->assertSee('Bandingkan paket')->assertSee('Rp 249.000')->assertSee('POPULER')->assertSee('Upgrade ke Premium')
             ->assertSee('Segera hadir')->assertSee('hingga 3 foto')->assertSee('Belum ada add-on yang dibeli.')
-            ->assertSee('Tambah kuota undangan')->assertSee('Perlu paket berbayar')->assertSee('Belum ada pesanan');
+            ->assertSee('Tambah kuota undangan')->assertSee('Perlu paket Premium')->assertSee('Belum ada pesanan');
     }
 
     public function test_pengguna_premium_melihat_masa_aktif_dan_kuota_lebih_besar(): void
@@ -65,7 +65,7 @@ class PaketBillingTest extends TestCase
 
         $this->halaman($user)
             ->assertSee('Paket Premium')->assertSee('Aktif sampai')->assertSee('Sisa masa aktif')->assertSee('100 hari')
-            ->assertSee('0 / 5')->assertSee('+2 dari add-on')->assertSee('hingga 20 foto')->assertSee('Perpanjang 12 bulan')
+            ->assertSee('0 / 5')->assertSee('hingga 20 foto')->assertSee('Perpanjang 12 bulan')
             ->assertSee('Tambah kuota undangan ×2')->assertSee('Termasuk di paket');
     }
 
@@ -73,7 +73,7 @@ class PaketBillingTest extends TestCase
     {
         $user = User::factory()->create(['paket' => 'premium', 'paket_sampai' => now()->subDays(5)]);
 
-        $this->halaman($user)->assertSee('Berakhir')->assertSee('berakhir pada')->assertSee('Perpanjang ke Premium')->assertSee('0 / 1');
+        $this->halaman($user)->assertSee('BERAKHIR')->assertSee('berakhir pada')->assertSee('Perpanjang ke Premium')->assertSee('0 / 1');
     }
 
     public function test_ringkasan_akun_paket_nyata(): void
@@ -176,7 +176,18 @@ class PaketBillingTest extends TestCase
         $user = User::factory()->create();
         $p = $this->pesanan($user);
 
-        $this->halaman($user)->assertSee(route('invoice', $p), false);
+        $this->halaman($user)->assertDontSee(route('invoice', $p), false)
+            ->call('bukaInvoice', $p->nomor)->assertSee(route('invoice', $p), false)->assertSee('Cetak / PDF')
+            ->call('tutupInvoice')->assertDontSee(route('invoice', $p), false);
+    }
+
+    public function test_dialog_invoice_hanya_untuk_pesanan_milik_sendiri(): void
+    {
+        $user = User::factory()->create();
+        $lain = $this->pesanan(User::factory()->create());
+
+        $this->halaman($user)->call('bukaInvoice', $lain->nomor)->assertSet('invoice', '')->assertDontSee($lain->nomor)
+            ->call('bukaInvoice', 'INV-0000-0000')->assertSet('invoice', '');
     }
 
     public function test_simpan_data_tagihan_valid_dan_tidak_valid(): void

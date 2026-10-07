@@ -13,6 +13,8 @@ use App\Services\Keranjang;
 use App\Services\KonfirmasiPesanan;
 use App\Services\KuotaUndangan;
 use App\Services\RingkasanAkun;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /** Paket & Billing: paket aktif, kuota, perbandingan paket, add-on (keranjang), riwayat pesanan, data tagihan. */
@@ -32,6 +34,15 @@ class PaketBilling extends Component
     public string $hp = '';
 
     public string $alamat = '';
+
+    /** Nomor invoice yang dibuka di dialog; hanya diisi lewat bukaInvoice (memeriksa kepemilikan). */
+    #[Locked]
+    public string $invoice = '';
+
+    /** Catatan di kartu Data tagihan (hijau = berhasil, merah = galat), seperti banner papan. */
+    public string $catatan = '';
+
+    public bool $catatanGalat = false;
 
     public function mount(KonfirmasiPesanan $konfirmasi, DataTagihan $tagihan): void
     {
@@ -85,11 +96,29 @@ class PaketBilling extends Component
         $this->semua = ! $this->semua;
     }
 
+    public function bukaInvoice(string $nomor): void
+    {
+        $this->invoice = Pesanan::milik(auth()->user())->where('nomor', $nomor)->value('nomor') ?? '';
+    }
+
+    public function tutupInvoice(): void
+    {
+        $this->invoice = '';
+    }
+
     public function simpanTagihan(DataTagihan $tagihan): void
     {
-        $data = $this->validate(DataTagihan::aturan(), DataTagihan::pesan());
+        try {
+            $data = $this->validate(DataTagihan::aturan(), DataTagihan::pesan());
+        } catch (ValidationException $e) {
+            $this->catatan = 'Periksa kolom yang ditandai merah.';
+            $this->catatanGalat = true;
+
+            throw $e;
+        }
         $tagihan->simpan(auth()->user(), $data);
-        $this->dispatch('toast', pesan: 'Data tagihan disimpan.', tipe: 'sukses');
+        $this->catatan = 'Data tagihan disimpan.';
+        $this->catatanGalat = false;
     }
 
     public function render(RingkasanAkun $ringkasan, KuotaUndangan $kuota, HitungPesanan $hitung, Keranjang $keranjang, AturanPaket $aturan)
@@ -130,7 +159,10 @@ class PaketBilling extends Component
         $durasiHari = max(1, ($paketAktif?->durasi_bulan ?: 12) * 30);
         $sisa = $info['sisaHari'];
 
+        $faktur = $this->invoice !== '' ? Pesanan::milik($user)->where('nomor', $this->invoice)->with('item')->first() : null;
+
         return view('livewire.paket-billing', [
+            'faktur' => $faktur,
             'info' => $info,
             'aktif' => $aktif,
             'paketAktif' => $paketAktif,
